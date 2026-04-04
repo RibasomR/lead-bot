@@ -1,0 +1,119 @@
+services:
+  ## PostgreSQL Database
+  db:
+    image: postgres:16
+    container_name: leadhunter_db
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-leadhunter}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-leadhunter_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Логи PostgreSQL внутри контейнера (не маппятся из-за проблем с правами)
+    # Порты не пробрасываются - БД доступна только внутри Docker сети
+    # Для внешнего доступа раскомментируйте: ports: ["5433:5432"]
+    networks:
+      - leadhunter_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-leadhunter} -d ${POSTGRES_DB:-leadhunter_db}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    command:
+      - "postgres"
+      - "-c"
+      - "max_connections=200"
+      - "-c"
+      - "shared_buffers=256MB"
+      - "-c"
+      - "effective_cache_size=1GB"
+      - "-c"
+      - "maintenance_work_mem=64MB"
+      - "-c"
+      - "checkpoint_completion_target=0.9"
+      - "-c"
+      - "wal_buffers=16MB"
+      - "-c"
+      - "default_statistics_target=100"
+      - "-c"
+      - "random_page_cost=1.1"
+      - "-c"
+      - "effective_io_concurrency=200"
+      - "-c"
+      - "work_mem=1310kB"
+      - "-c"
+      - "min_wal_size=1GB"
+      - "-c"
+      - "max_wal_size=4GB"
+
+  ## Admin Bot
+  admin_bot:
+    build:
+      context: .
+      dockerfile: admin_bot/Dockerfile
+    container_name: leadhunter_admin_bot
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - leadhunter_network
+    ports:
+      - "127.0.0.1:8010:8000"
+    volumes:
+      - ./sessions:/app/sessions
+    user: "0:0"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # Логи внутри контейнера, доступны через: docker compose logs admin_bot
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  ## Lead Listener (Userbot Service)
+  lead_listener:
+    build:
+      context: .
+      dockerfile: lead_listener/Dockerfile
+    container_name: leadhunter_lead_listener
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+      admin_bot:
+        condition: service_healthy
+    networks:
+      - leadhunter_network
+    ports:
+      - "127.0.0.1:8011:8001"
+    volumes:
+      - ./sessions:/app/sessions
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+      # Логи внутри контейнера, доступны через: docker compose logs lead_listener
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8001/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+networks:
+  leadhunter_network:
+    driver: bridge
+    name: leadhunter_network
+
+volumes:
+  postgres_data:
+    driver: local
+    name: leadhunter_postgres_data
+
