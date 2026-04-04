@@ -1,27 +1,27 @@
+<h1 align="center">🎯 LeadHunter — Telegram Lead Monitoring System</h1>
+
 <p align="center">
-  <h1 align="center">LeadHunter</h1>
-  <p align="center">
-    <strong>Automated Telegram lead monitoring system with AI-powered analysis</strong>
-  </p>
-  <p align="center">
-    <a href="#features">Features</a> •
-    <a href="#architecture">Architecture</a> •
-    <a href="#quick-start">Quick Start</a> •
-    <a href="#configuration">Configuration</a> •
-    <a href="#license">License</a>
-  </p>
-  <p align="center">
-    <img src="https://img.shields.io/badge/python-3.10+-blue?logo=python&logoColor=white&style=for-the-badge" alt="Python">
-    <img src="https://img.shields.io/badge/Telegram-Bot%20%2B%20Userbot-blue?logo=telegram&logoColor=white&style=for-the-badge" alt="Telegram">
-    <img src="https://img.shields.io/badge/AI-OpenRouter-purple?logo=openai&logoColor=white&style=for-the-badge" alt="AI">
-    <img src="https://img.shields.io/badge/Docker-Ready-blue?logo=docker&logoColor=white&style=for-the-badge" alt="Docker">
-    <img src="https://img.shields.io/github/license/RibasomR/lead-bot?style=for-the-badge" alt="License">
-  </p>
+  <strong>Catch freelance orders from 30+ chats before anyone else does.</strong><br>
+  AI classifies leads, scores quality, and drafts replies — you just hit Send.
+</p>
+
+<p align="center">
+  <a href="#features">Features</a> •
+  <a href="#architecture">Architecture</a> •
+  <a href="#quick-start">Quick Start</a> •
+  <a href="#how-it-works">How It Works</a> •
+  <a href="#license">License</a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/python-3.10+-blue?logo=python&logoColor=white&style=for-the-badge" alt="Python">
+  <img src="https://img.shields.io/badge/Telegram-Bot%20%2B%20Userbot-blue?logo=telegram&logoColor=white&style=for-the-badge" alt="Telegram">
+  <img src="https://img.shields.io/badge/AI-OpenRouter-purple?logo=openai&logoColor=white&style=for-the-badge" alt="AI">
+  <img src="https://img.shields.io/badge/Docker-Ready-blue?logo=docker&logoColor=white&style=for-the-badge" alt="Docker">
+  <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" alt="License">
 </p>
 
 ---
-
-LeadHunter monitors 30+ Telegram chats in real-time, catches potential freelance orders and project requests, and delivers them as rich lead cards with AI recommendations — all managed through a Telegram bot interface.
 
 > **🇷🇺 Русская версия:** [docs/README.md](docs/README.md)
 
