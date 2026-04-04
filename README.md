@@ -23,6 +23,12 @@
 
 ---
 
+You're a freelance developer. Every day, hundreds of potential clients post in Telegram chats — _"need a bot"_, _"looking for a developer"_, _"who can automate this?"_. You can't sit in 30 chats refreshing all day. **LeadHunter does it for you.**
+
+It monitors your target chats 24/7 through userbot accounts, catches messages that match your keywords, and sends you a neat card with everything you need: who's asking, what they want, a quality score from AI, and a suggested price range. You pick a reply style, tweak if needed, and send — all without leaving Telegram.
+
+No web dashboards. No CRM. Just Telegram and a VPS.
+
 > **🇷🇺 Русская версия:** [docs/README.md](docs/README.md)
 
 ## Features
@@ -108,15 +114,21 @@ See [.env.example](.env.example) for the full list.
 
 ## How It Works
 
-1. **Lead Listener** joins target chats via userbot accounts
-2. Incoming messages are filtered by keywords (configurable)
-3. Matched messages are saved as leads, then AI analyzes quality and generates a summary
-4. **Admin Bot** sends a lead card to the operator with:
-   - Chat name, author, link to original message
-   - AI quality score (1–5 stars), suggested price range
-   - Stack tags extracted from text
-5. Operator chooses an account + reply style, AI generates response options
-6. Operator approves or edits the reply, which is sent with anti-ban delays
+Here's what happens when someone posts _"Need a Telegram bot for my business, budget $500"_ in a monitored chat:
+
+```
+💬 Chat: @freelance_orders
+👤 Author: @potential_client
+📝 "Need a Telegram bot for my business, budget $500"
+
+🤖 AI Analysis:
+   ⭐⭐⭐⭐ Quality: 4/5
+   💰 Price range: $400–$800
+   🏷️ Stack: Telegram, Bot, aiogram
+   🎯 Recommendation: Reply in friendly tone, emphasize experience
+```
+
+The bot sends you this card in Telegram with action buttons. You pick a reply style, AI drafts a response, you tweak it if needed, and hit Send. The reply goes from your work account with natural delays to avoid bans.
 
 **Reply styles:**
 
