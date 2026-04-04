@@ -130,14 +130,6 @@ Here's what happens when someone posts _"Need a Telegram bot for my business, bu
 
 The bot sends you this card in Telegram with action buttons. You pick a reply style, AI drafts a response, you tweak it if needed, and hit Send. The reply goes from your work account with natural delays to avoid bans.
 
-**Reply styles:**
-
-| Style | Use case |
-|-------|----------|
-| 🎩 Polite | Corporate clients, formal tone |
-| 😊 Friendly | Startups, personal projects |
-| 💪 Aggressive | Urgency-driven, price negotiation |
-
 ## Commands
 
 | Command | Description |
