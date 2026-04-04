@@ -1,16 +1,16 @@
-<h1 align="center">🎯 LeadHunter — Telegram Lead Monitoring System</h1>
+<h1 align="center">🎯 LeadHunter — Мониторинг лидов в Telegram</h1>
 
 <p align="center">
-  <strong>Catch freelance orders from 30+ chats before anyone else does.</strong><br>
-  AI classifies leads, scores quality, and drafts replies — you just hit Send.
+  <strong>Ловит заказы из 30+ чатов раньше всех остальных.</strong><br>
+  AI классифицирует лиды, оценивает качество и пишет отклики — тебе остаётся нажать «Отправить».
 </p>
 
 <p align="center">
-  <a href="#features">Features</a> •
-  <a href="#architecture">Architecture</a> •
-  <a href="#quick-start">Quick Start</a> •
-  <a href="#how-it-works">How It Works</a> •
-  <a href="#license">License</a>
+  <a href="#как-это-работает">Как это работает</a> •
+  <a href="#возможности">Возможности</a> •
+  <a href="#архитектура">Архитектура</a> •
+  <a href="#быстрый-старт">Быстрый старт</a> •
+  <a href="#лицензия">Лицензия</a>
 </p>
 
 <p align="center">
@@ -23,26 +23,42 @@
 
 ---
 
-You're a freelance developer. Every day, hundreds of potential clients post in Telegram chats — _"need a bot"_, _"looking for a developer"_, _"who can automate this?"_. You can't sit in 30 chats refreshing all day. **LeadHunter does it for you.**
+Ты фрилансер-разработчик. Каждый день в десятках Telegram-чатов появляются сообщения — _«нужен бот»_, _«ищу разработчика»_, _«кто может автоматизировать?»_. Сидеть в 30 чатах и обновлять ленту весь день невозможно. **LeadHunter делает это за тебя.**
 
-It monitors your target chats 24/7 through userbot accounts, catches messages that match your keywords, and sends you a neat card with everything you need: who's asking, what they want, a quality score from AI, and a suggested price range. You pick a reply style, tweak if needed, and send — all without leaving Telegram.
+Система мониторит целевые чаты 24/7 через userbot-аккаунты, ловит сообщения по ключевым словам и присылает тебе аккуратную карточку: кто пишет, что хочет, оценка качества от AI и рекомендуемая вилка цен. Выбираешь стиль ответа, корректируешь если нужно, нажимаешь «Отправить» — всё, не выходя из Telegram.
 
-No web dashboards. No CRM. Just Telegram and a VPS.
+Без веб-дашбордов. Без CRM. Только Telegram и VPS.
 
-> **🇷🇺 Русская версия:** [docs/README.md](docs/README.md)
+## Как это работает
 
-## Features
+Кто-то пишет в мониторимом чате _«Нужен Telegram-бот для бизнеса, бюджет $500»_ — и через секунду ты получаешь:
 
-- **Real-time monitoring** — scans 30+ chats simultaneously via Telethon userbot
-- **AI-powered analysis** — auto-classifies leads, scores quality (1–5), suggests price ranges
-- **Smart replies** — generates context-aware responses in 3 styles (polite, friendly, aggressive)
-- **Lead cards** — rich formatted cards with chat, author, stack tags, AI summary
-- **Anti-ban protection** — rate limiting, random delays, per-chat hourly limits
-- **Channel discovery** — automatically finds and recommends new relevant channels
-- **Lead history** — full history with pagination and time-based filters
-- **Zero web UI** — everything managed through Telegram commands
+```
+💬 Чат: @freelance_orders
+👤 Автор: @potential_client
+📝 «Нужен Telegram-бот для бизнеса, бюджет $500»
 
-## Architecture
+🤖 AI-анализ:
+   ⭐⭐⭐⭐ Качество: 4/5
+   💰 Вилка цен: $400–$800
+   🏷️ Стек: Telegram, Bot, aiogram
+   🎯 Рекомендация: ответить в дружелюбном тоне, подчеркнуть опыт
+```
+
+Бот присылает эту карточку с кнопками действий. Выбираешь стиль ответа, AI генерирует текст, подправляешь и отправляешь. Отклик уходит с рабочего аккаунта с естественными задержками, чтобы не попасть в бан.
+
+## Возможности
+
+- **Мониторинг в реальном времени** — сканирует 30+ чатов одновременно через Telethon userbot
+- **AI-анализ** — автоматически классифицирует лиды, оценивает качество (1–5), предлагает вилку цен
+- **Умные отклики** — генерирует контекстные ответы в разных стилях
+- **Лид-карточки** — форматированные карточки с чатом, автором, стек-тегами, AI-саммари
+- **Антибан-защита** — rate limiting, случайные задержки, лимиты откликов на чат в час
+- **Автопоиск каналов** — находит и рекомендует новые релевантные каналы
+- **История лидов** — полная история с пагинацией и фильтрами по времени
+- **Zero web UI** — всё управление через команды Telegram
+
+## Архитектура
 
 ```
 ┌──────────────┐     ┌──────────────┐     ┌──────────────┐
@@ -58,122 +74,104 @@ No web dashboards. No CRM. Just Telegram and a VPS.
                    └─────────────┘
 ```
 
-| Service | Role | Tech |
-|---------|------|------|
-| **Admin Bot** | Operator interface — lead cards, commands, reply management | aiogram 3.x |
-| **Lead Listener** | Chat monitoring via 2–5 userbot accounts | Telethon |
-| **PostgreSQL** | Leads, chats, accounts, AI analysis storage | SQLAlchemy + Alembic |
-| **AI Advisor** | Lead scoring, reply generation, channel evaluation | OpenRouter API |
+| Сервис | Роль | Технология |
+|--------|------|------------|
+| **Admin Bot** | Интерфейс оператора — карточки лидов, команды, управление откликами | aiogram 3.x |
+| **Lead Listener** | Мониторинг чатов через 2–5 userbot-аккаунтов | Telethon |
+| **PostgreSQL** | Хранилище лидов, чатов, аккаунтов, AI-анализов | SQLAlchemy + Alembic |
+| **AI Advisor** | Скоринг лидов, генерация откликов, оценка каналов | OpenRouter API |
 
-## Quick Start
+## Быстрый старт
 
-### Prerequisites
+### Что нужно
 
-- Docker 20.10+ & Docker Compose 2.0+
-- Telegram Bot Token ([@BotFather](https://t.me/BotFather))
+- Docker 20.10+ и Docker Compose 2.0+
+- Токен Telegram-бота ([@BotFather](https://t.me/BotFather))
 - Telegram API credentials ([my.telegram.org](https://my.telegram.org))
 - OpenRouter API key ([openrouter.ai](https://openrouter.ai))
 
-### Setup
+### Установка
 
 ```bash
-# Clone
+# Клонируем
 git clone https://github.com/RibasomR/lead-bot.git && cd lead-bot
 
-# Configure
+# Настраиваем
 cp .env.example .env
-nano .env  # Fill in your credentials
+nano .env  # Заполни свои credentials
 
-# Launch
+# Запускаем
 docker compose up -d
 
-# Run database migrations
+# Миграции БД
 docker compose exec admin_bot python -m alembic upgrade head
 
-# Authorize userbot accounts
+# Авторизуем userbot-аккаунты
 docker compose exec -it lead_listener python lead_listener/auth_cli.py
 ```
 
-Send `/start` to your bot — you're live.
+Отправь `/start` своему боту — готово.
 
-## Configuration
+## Настройка
 
-All settings are in `.env`. Key parameters:
+Все параметры в `.env`. Ключевые:
 
-| Variable | Description |
-|----------|-------------|
-| `ADMIN_BOT_TOKEN` | Telegram bot token from @BotFather |
-| `OPERATOR_USER_ID` | Your Telegram user ID |
-| `TELEGRAM_API_ID` / `API_HASH` | From my.telegram.org |
-| `OPENROUTER_API_KEY` | AI API key |
-| `DATABASE_URL` | PostgreSQL connection string |
-| `MAX_REPLIES_PER_CHAT_PER_HOUR` | Anti-spam rate limit (default: 5) |
-| `DEFAULT_MONITOR_CHATS` | Comma-separated chat usernames to monitor |
+| Переменная | Описание |
+|------------|----------|
+| `ADMIN_BOT_TOKEN` | Токен Telegram-бота от @BotFather |
+| `OPERATOR_USER_ID` | Твой Telegram user ID |
+| `TELEGRAM_API_ID` / `API_HASH` | С my.telegram.org |
+| `OPENROUTER_API_KEY` | API-ключ для AI |
+| `DATABASE_URL` | Строка подключения к PostgreSQL |
+| `MAX_REPLIES_PER_CHAT_PER_HOUR` | Антиспам-лимит откликов (по умолчанию: 5) |
+| `DEFAULT_MONITOR_CHATS` | Юзернеймы чатов для мониторинга через запятую |
 
-See [.env.example](.env.example) for the full list.
+Полный список — в [.env.example](.env.example).
 
-## How It Works
+## Команды
 
-Here's what happens when someone posts _"Need a Telegram bot for my business, budget $500"_ in a monitored chat:
+| Команда | Описание |
+|---------|----------|
+| `/start` | Главное меню |
+| `/leads` | История лидов с фильтрами |
+| `/add_chat` | Добавить чат (по ID, username или пересылкой) |
+| `/list_chats` | Управление чатами |
+| `/add_account` | Добавить userbot-аккаунт |
+| `/list_accounts` | Управление аккаунтами |
 
-```
-💬 Chat: @freelance_orders
-👤 Author: @potential_client
-📝 "Need a Telegram bot for my business, budget $500"
-
-🤖 AI Analysis:
-   ⭐⭐⭐⭐ Quality: 4/5
-   💰 Price range: $400–$800
-   🏷️ Stack: Telegram, Bot, aiogram
-   🎯 Recommendation: Reply in friendly tone, emphasize experience
-```
-
-The bot sends you this card in Telegram with action buttons. You pick a reply style, AI drafts a response, you tweak it if needed, and hit Send. The reply goes from your work account with natural delays to avoid bans.
-
-## Commands
-
-| Command | Description |
-|---------|-------------|
-| `/start` | Main menu |
-| `/leads` | Lead history with filters |
-| `/add_chat` | Add chat to monitor (by ID, username, or forward) |
-| `/list_chats` | Manage monitored chats |
-| `/add_account` | Add userbot account |
-| `/list_accounts` | Manage accounts |
-
-## Project Structure
+## Структура проекта
 
 ```
 lead-bot/
-├── admin_bot/          # Telegram bot for operator (aiogram 3.x)
-│   ├── handlers/       # Command handlers
-│   ├── main.py         # Entry point
-│   └── keyboards.py    # Inline & reply keyboards
-├── lead_listener/      # Chat monitoring service (Telethon)
-│   ├── main.py         # Entry point + HTTP API
-│   ├── filters.py      # Keyword matching
-│   ├── notifier.py     # Lead delivery to Admin Bot
-│   └── rate_limiter.py # Anti-spam protection
-├── shared/             # Shared modules
+├── admin_bot/          # Telegram-бот оператора (aiogram 3.x)
+│   ├── handlers/       # Обработчики команд
+│   ├── main.py         # Точка входа
+│   └── keyboards.py    # Inline и reply клавиатуры
+├── lead_listener/      # Сервис мониторинга чатов (Telethon)
+│   ├── main.py         # Точка входа + HTTP API
+│   ├── filters.py      # Фильтрация по ключевым словам
+│   ├── notifier.py     # Доставка лидов в Admin Bot
+│   └── rate_limiter.py # Антиспам-защита
+├── shared/             # Общие модули
 │   ├── ai/             # AI Advisor (OpenRouter)
-│   ├── database/       # SQLAlchemy models, CRUD, migrations
-│   ├── channel_discovery/  # Auto-discovery of new channels
-│   └── utils/          # Logging, error handling
-├── migrations/         # Alembic database migrations
+│   ├── database/       # SQLAlchemy модели, CRUD, миграции
+│   ├── channel_discovery/  # Автопоиск каналов
+│   └── utils/          # Логирование, обработка ошибок
+├── migrations/         # Alembic-миграции
 ├── docker-compose.yml
 └── requirements.txt
 ```
 
-## Tech Stack
+## Стек
 
-- **Python 3.10+** with async/await
+- **Python 3.10+** с async/await
 - **aiogram 3.x** — Telegram Bot API
 - **Telethon** — Telegram Client API (userbot)
-- **PostgreSQL** via SQLAlchemy 2.0 + asyncpg
-- **Alembic** — database migrations
-- **OpenRouter** — AI models (Llama, DeepSeek, Gemini)
-- **Docker Compose** — deployment
+- **PostgreSQL** через SQLAlchemy 2.0 + asyncpg
+- **Alembic** — миграции БД
+- **OpenRouter** — AI-модели (Llama, DeepSeek, Gemini)
+- **Docker Compose** — деплой
 
-## License
+## Лицензия
 
-This project is licensed under the [MIT License](LICENSE).
+[MIT](LICENSE) — делай что хочешь.
