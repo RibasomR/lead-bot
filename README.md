@@ -11,11 +11,11 @@
     <a href="#license">License</a>
   </p>
   <p align="center">
-    <img src="https://img.shields.io/badge/python-3.10+-blue?logo=python&logoColor=white" alt="Python">
-    <img src="https://img.shields.io/badge/Telegram-Bot%20%2B%20Userbot-blue?logo=telegram&logoColor=white" alt="Telegram">
-    <img src="https://img.shields.io/badge/AI-OpenRouter-purple?logo=openai&logoColor=white" alt="AI">
-    <img src="https://img.shields.io/badge/Docker-Ready-blue?logo=docker&logoColor=white" alt="Docker">
-    <img src="https://img.shields.io/github/license/RibasomR/lead-bot" alt="License">
+    <img src="https://img.shields.io/badge/python-3.10+-blue?logo=python&logoColor=white&style=for-the-badge" alt="Python">
+    <img src="https://img.shields.io/badge/Telegram-Bot%20%2B%20Userbot-blue?logo=telegram&logoColor=white&style=for-the-badge" alt="Telegram">
+    <img src="https://img.shields.io/badge/AI-OpenRouter-purple?logo=openai&logoColor=white&style=for-the-badge" alt="AI">
+    <img src="https://img.shields.io/badge/Docker-Ready-blue?logo=docker&logoColor=white&style=for-the-badge" alt="Docker">
+    <img src="https://img.shields.io/github/license/RibasomR/lead-bot?style=for-the-badge" alt="License">
   </p>
 </p>
 
