@@ -154,15 +154,10 @@ class Settings(BaseSettings):
         description="Порог relevance для глобального поиска (ниже чем мониторинг)"
     )
 
-    # === v2: Reply Generator (Gemini через Antigravity Proxy) ===
-    gemini_proxy_url: Optional[str] = Field(
-        default=None,
-        description="URL Antigravity Proxy для Gemini (Anthropic-совместимый API)"
-    )
-
-    gemini_api_key: Optional[str] = Field(
-        default=None,
-        description="API ключ для Gemini proxy"
+    # === v2: Reply Generator ===
+    reply_model: str = Field(
+        default="deepseek/deepseek-chat-v3-0324",
+        description="Модель OpenRouter для генерации ответов на лиды"
     )
 
     # === v2: Одобренные чаты для мониторинга ===
