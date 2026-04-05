@@ -6,7 +6,7 @@ LanguageMiddleware — извлекает язык оператора из БД 
 from typing import Callable, Awaitable, Any, Dict
 
 from aiogram import BaseMiddleware
-from aiogram.types import TelegramObject, Message, CallbackQuery
+from aiogram.types import TelegramObject
 
 from shared.database.engine import get_session
 from shared.database.crud import get_operator_language
@@ -24,12 +24,8 @@ class LanguageMiddleware(BaseMiddleware):
         event: TelegramObject,
         data: Dict[str, Any],
     ) -> Any:
-        user_id = None
-
-        if isinstance(event, Message) and event.from_user:
-            user_id = event.from_user.id
-        elif isinstance(event, CallbackQuery) and event.from_user:
-            user_id = event.from_user.id
+        user = data.get("event_from_user")
+        user_id = user.id if user else None
 
         lang = "ru"
         if user_id:
