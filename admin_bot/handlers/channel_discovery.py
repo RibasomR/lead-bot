@@ -23,6 +23,7 @@ from shared.database.engine import get_session
 from shared.database import crud
 from shared.database.models import ChannelSource
 from shared.channel_discovery import ChannelDiscoveryService, TelegramSearchProvider
+from shared.locales import t
 from shared.utils.logging import setup_logging
 
 logger = logging.getLogger(__name__)
@@ -39,157 +40,134 @@ class ChannelDiscoveryStates(StatesGroup):
 
 ## Меню автопоиска каналов
 @router.callback_query(F.data == "channels:discovery", OperatorFilter())
-async def show_channel_discovery_menu(callback: CallbackQuery):
+async def show_channel_discovery_menu(callback: CallbackQuery, lang: str = "ru"):
     """
     ## Показать меню автопоиска каналов
     """
     async with get_session() as session:
         # Получаем статистику по кандидатам
         stats = await crud.get_candidates_statistics(session)
-    
+
     menu_text = (
-        "🔍 <b>Автопоиск каналов</b>\n\n"
-        "Система автоматически находит релевантные Telegram-каналы "
-        "для мониторинга лидов и оценивает их с помощью AI.\n\n"
-        "📊 <b>Статистика кандидатов:</b>\n"
-        f"• Всего найдено: {stats['total']}\n"
-        f"• Ожидают проверки: {stats['pending']}\n"
-        f"• Добавлено в мониторинг: {stats['added']}\n"
-        f"• Отклонено: {stats['rejected']}\n\n"
-        "Выберите действие:"
+        t("discovery.menu_title", lang)
+        + t("discovery.stats_title", lang)
+        + t("discovery.stats_total", lang, count=stats['total'])
+        + t("discovery.stats_pending", lang, count=stats['pending'])
+        + t("discovery.stats_added", lang, count=stats['added'])
+        + t("discovery.stats_rejected", lang, count=stats['rejected'])
+        + t("discovery.action_prompt", lang)
     )
-    
+
     await callback.message.edit_text(
         menu_text,
-        reply_markup=get_channel_discovery_menu_keyboard()
+        reply_markup=get_channel_discovery_menu_keyboard(lang)
     )
     await callback.answer()
 
 
 ## Запуск автопоиска
 @router.callback_query(F.data == "channels:start_search", OperatorFilter())
-async def start_channel_search(callback: CallbackQuery, state: FSMContext):
+async def start_channel_search(callback: CallbackQuery, state: FSMContext, lang: str = "ru"):
     """
     ## Запустить автопоиск каналов
     """
-    # Показываем сообщение о процессе
+    keywords = settings.channel_search_keywords_list[:10]
+    more_count = len(settings.channel_search_keywords_list) - 10
+
     search_text = (
-        "🚀 <b>Запуск автопоиска каналов...</b>\n\n"
-        f"Буду искать каналы по ключевым словам:\n"
-        f"<code>{', '.join(settings.channel_search_keywords_list[:10])}</code>\n"
-        f"{f'и ещё {len(settings.channel_search_keywords_list) - 10}...' if len(settings.channel_search_keywords_list) > 10 else ''}\n\n"
-        "⏳ Это может занять несколько минут...\n"
-        "Я найду каналы, соберу посты и проведу AI-оценку."
+        t("discovery.search_started", lang)
+        + t("discovery.search_keywords", lang)
+        + f"<code>{', '.join(keywords)}</code>\n"
+        + (t("discovery.search_more", lang, count=more_count) if more_count > 0 else "")
+        + t("discovery.search_wait", lang)
     )
-    
+
     await callback.message.edit_text(search_text)
     await callback.answer()
-    
+
     try:
-        # Импортируем необходимые модули для работы с Telethon
-        # Для простоты используем Lead Listener API
         import httpx
-        
-        # Отправляем запрос на поиск каналов через Lead Listener
+
         async with httpx.AsyncClient(timeout=300.0) as client:
             try:
                 response = await client.post(
                     f"{settings.admin_bot_api_url.replace('admin_bot', 'lead_listener').replace('8000', '8001')}/api/discover_channels",
                     json={
-                        "limit_per_query": 3,  ## Уменьшили до 3 каналов на запрос для быстрого результата
+                        "limit_per_query": 3,
                         "evaluate_with_ai": True
                     }
                 )
-                
+
                 if response.status_code == 200:
                     result = response.json()
                     candidate_ids = result.get("candidate_ids", [])
-                    
-                    # Получаем статистику
+
                     async with get_session() as session:
                         stats = await crud.get_candidates_statistics(session)
-                    
+
                     success_text = (
-                        "✅ <b>Автопоиск завершён!</b>\n\n"
-                        f"🎯 Найдено новых каналов: {len(candidate_ids)}\n\n"
-                        "📊 <b>Общая статистика:</b>\n"
-                        f"• Всего кандидатов: {stats['total']}\n"
-                        f"• Ожидают проверки: {stats['pending']}\n"
-                        f"• Добавлено в мониторинг: {stats['added']}\n\n"
-                        "Используйте кнопку ниже, чтобы посмотреть рекомендации."
+                        t("discovery.search_done", lang, count=len(candidate_ids))
+                        + t("discovery.search_overall", lang)
+                        + t("discovery.stats_total", lang, count=stats['total'])
+                        + t("discovery.stats_pending", lang, count=stats['pending'])
+                        + t("discovery.stats_added", lang, count=stats['added'])
+                        + t("discovery.search_view_prompt", lang)
                     )
-                    
+
                     await callback.message.edit_text(
                         success_text,
-                        reply_markup=get_channel_discovery_menu_keyboard()
+                        reply_markup=get_channel_discovery_menu_keyboard(lang)
                     )
                 else:
-                    raise Exception(f"Ошибка API: {response.status_code}")
-            
+                    raise Exception(f"API error: {response.status_code}")
+
             except httpx.TimeoutException:
-                error_text = (
-                    "⏱ <b>Превышено время ожидания</b>\n\n"
-                    "Поиск каналов занял слишком много времени.\n"
-                    "Попробуйте снова или уменьшите количество ключевых слов."
-                )
                 await callback.message.edit_text(
-                    error_text,
-                    reply_markup=get_channel_discovery_menu_keyboard()
+                    t("discovery.search_timeout", lang),
+                    reply_markup=get_channel_discovery_menu_keyboard(lang)
                 )
-    
+
     except Exception as e:
         logger.error(f"Ошибка автопоиска каналов: {e}", exc_info=True)
-        error_text = (
-            f"❌ <b>Ошибка при поиске каналов</b>\n\n"
-            f"Произошла ошибка: {str(e)}\n\n"
-            "Попробуйте снова позже или обратитесь к администратору."
-        )
         await callback.message.edit_text(
-            error_text,
-            reply_markup=get_channel_discovery_menu_keyboard()
+            t("discovery.search_error", lang, error=str(e)),
+            reply_markup=get_channel_discovery_menu_keyboard(lang)
         )
 
 
 ## Просмотр рекомендованных каналов
 @router.callback_query(F.data == "channels:view_recommendations", OperatorFilter())
-async def view_channel_recommendations(callback: CallbackQuery, state: FSMContext):
+async def view_channel_recommendations(callback: CallbackQuery, state: FSMContext, lang: str = "ru"):
     """
     ## Показать список рекомендованных каналов
     """
     async with get_session() as session:
-        # Получаем топ-кандидатов с AI-оценкой
         top_candidates = await crud.get_pending_candidates(
             session=session,
             min_score=settings.channel_min_score_threshold,
             limit=50
         )
-    
+
     if not top_candidates:
-        no_candidates_text = (
-            "🤷 <b>Нет рекомендованных каналов</b>\n\n"
-            "Запустите автопоиск, чтобы найти новые каналы."
-        )
         await callback.message.edit_text(
-            no_candidates_text,
-            reply_markup=get_channel_discovery_menu_keyboard()
+            t("discovery.no_recommendations", lang),
+            reply_markup=get_channel_discovery_menu_keyboard(lang)
         )
         await callback.answer()
         return
-    
-    # Сортируем по score
+
     top_candidates = sorted(
         [c for c in top_candidates if c.ai_score is not None],
         key=lambda c: c.ai_score,
         reverse=True
     )
-    
-    # Показываем первого кандидата
+
     await state.update_data(
         candidates=[c.id for c in top_candidates],
         current_index=0
     )
-    
-    await show_candidate_card(callback.message, top_candidates[0], 0, len(top_candidates), state)
+
+    await show_candidate_card(callback.message, top_candidates[0], 0, len(top_candidates), state, lang)
     await callback.answer()
 
 
@@ -199,12 +177,12 @@ async def show_candidate_card(
     candidate,
     index: int,
     total: int,
-    state: FSMContext
+    state: FSMContext,
+    lang: str = "ru"
 ):
     """
     ## Отобразить карточку кандидата канала
     """
-    # Эмодзи для score
     if candidate.ai_score >= 8:
         score_emoji = "🔥"
     elif candidate.ai_score >= 6:
@@ -213,40 +191,32 @@ async def show_candidate_card(
         score_emoji = "⚠️"
     else:
         score_emoji = "❌"
-    
-    card_text = (
-        f"📺 <b>Канал {index + 1} из {total}</b>\n\n"
-        f"<b>{candidate.title}</b>\n"
-        f"{'@' + candidate.username if candidate.username else '(нет username)'}\n\n"
-    )
-    
-    # Описание
+
+    card_text = t("discovery.candidate_card", lang, index=index + 1, total=total)
+    card_text += f"<b>{candidate.title}</b>\n"
+    card_text += f"{'@' + candidate.username if candidate.username else t('discovery.no_username', lang)}\n\n"
+
     if candidate.description:
         desc_preview = candidate.description[:200]
         if len(candidate.description) > 200:
             desc_preview += "..."
         card_text += f"📝 {desc_preview}\n\n"
-    
-    # Метрики
-    card_text += "📊 <b>Метрики:</b>\n"
+
+    card_text += t("discovery.metrics_title", lang)
     if candidate.members_count:
-        card_text += f"• Подписчиков: {candidate.members_count:,}\n"
-    card_text += f"• Источник: {candidate.source}\n\n"
-    
-    # AI-оценка
+        card_text += t("discovery.members", lang, count=f"{candidate.members_count:,}")
+    card_text += t("discovery.source", lang, source=candidate.source) + "\n"
+
     if candidate.ai_score is not None:
-        card_text += (
-            f"🤖 <b>AI-оценка:</b> {score_emoji} {candidate.ai_score:.1f}/10\n"
-            f"📁 <b>Тип контента:</b> {candidate.ai_order_type or 'не определён'}\n\n"
-        )
-        
+        card_text += t("discovery.ai_score", lang, emoji=score_emoji, score=f"{candidate.ai_score:.1f}")
+        card_text += t("discovery.ai_content_type", lang, type=candidate.ai_order_type or "?")
+
         if candidate.ai_comment:
-            card_text += f"💬 <b>Комментарий AI:</b>\n{candidate.ai_comment}\n\n"
-    
-    # Ссылка
+            card_text += t("discovery.ai_comment", lang, comment=candidate.ai_comment)
+
     if candidate.invite_link:
-        card_text += f"🔗 <a href='{candidate.invite_link}'>Открыть канал</a>"
-    
+        card_text += f"🔗 <a href='{candidate.invite_link}'>{t('discovery.open_link', lang)}</a>"
+
     await message.edit_text(
         card_text,
         reply_markup=get_channel_candidate_keyboard(
@@ -261,76 +231,71 @@ async def show_candidate_card(
 
 ## Навигация по кандидатам
 @router.callback_query(F.data.startswith("candidate:nav:"), OperatorFilter())
-async def navigate_candidates(callback: CallbackQuery, state: FSMContext):
+async def navigate_candidates(callback: CallbackQuery, state: FSMContext, lang: str = "ru"):
     """
     ## Навигация между кандидатами
     """
-    direction = callback.data.split(":")[2]  # prev или next
-    
+    direction = callback.data.split(":")[2]
+
     data = await state.get_data()
     candidates = data.get("candidates", [])
     current_index = data.get("current_index", 0)
-    
+
     if not candidates:
-        await callback.answer("❌ Список кандидатов пуст")
+        await callback.answer(t("discovery.candidates_empty", lang))
         return
-    
-    # Вычисляем новый индекс
+
     if direction == "next":
         new_index = (current_index + 1) % len(candidates)
-    else:  # prev
+    else:
         new_index = (current_index - 1) % len(candidates)
-    
+
     await state.update_data(current_index=new_index)
-    
-    # Получаем кандидата из БД
+
     async with get_session() as session:
         candidate = await crud.get_channel_candidate_by_id(
             session,
             candidates[new_index]
         )
-    
+
     if candidate:
-        await show_candidate_card(callback.message, candidate, new_index, len(candidates), state)
-    
+        await show_candidate_card(callback.message, candidate, new_index, len(candidates), state, lang)
+
     await callback.answer()
 
 
 ## Добавить канал в whitelist
 @router.callback_query(F.data.startswith("candidate:add:"), OperatorFilter())
-async def add_candidate_to_whitelist(callback: CallbackQuery, state: FSMContext):
+async def add_candidate_to_whitelist(callback: CallbackQuery, state: FSMContext, lang: str = "ru"):
     """
     ## Добавить кандидата в whitelist для мониторинга
     """
     candidate_id = int(callback.data.split(":")[2])
-    
+
     async with get_session() as session:
         candidate = await crud.get_channel_candidate_by_id(session, candidate_id)
-        
+
         if not candidate:
-            await callback.answer("❌ Кандидат не найден")
+            await callback.answer(t("discovery.candidate_not_found", lang))
             return
-        
-        # Проверяем, существует ли уже такой чат
+
         existing_chat = None
         if candidate.username:
-            # Ищем по username (без @)
             username_clean = candidate.username.lstrip('@')
             all_chats = await crud.get_all_chats(session, enabled_only=False)
             existing_chat = next(
                 (c for c in all_chats if c.username and c.username.lower() == username_clean.lower()),
                 None
             )
-        
+
         if existing_chat:
-            await callback.answer("ℹ️ Этот канал уже есть в списке", show_alert=True)
+            await callback.answer(t("discovery.already_in_list", lang), show_alert=True)
             return
-        
-        # Создаём новый чат
+
         try:
             new_chat = await crud.create_chat(
                 session=session,
-                tg_chat_id=candidate.tg_chat_id or 0,  # Будет обновлено при первом мониторинге
+                tg_chat_id=candidate.tg_chat_id or 0,
                 title=candidate.title,
                 username=candidate.username.lstrip('@') if candidate.username else None,
                 chat_type="channel",
@@ -338,25 +303,23 @@ async def add_candidate_to_whitelist(callback: CallbackQuery, state: FSMContext)
                 enabled=True,
                 priority=10 if candidate.ai_score and candidate.ai_score >= 8 else 5
             )
-            
-            # Помечаем кандидата как добавленного
+
             await crud.mark_candidate_as_added(session, candidate_id)
             await session.commit()
-            
+
             await callback.answer(
-                f"✅ Канал '{candidate.title}' добавлен в мониторинг!",
+                t("discovery.added_to_monitoring", lang, title=candidate.title),
                 show_alert=True
             )
-            
-            # Переходим к следующему кандидату
+
             data = await state.get_data()
             candidates = data.get("candidates", [])
             current_index = data.get("current_index", 0)
-            
+
             if current_index + 1 < len(candidates):
                 new_index = current_index + 1
                 await state.update_data(current_index=new_index)
-                
+
                 next_candidate = await crud.get_channel_candidate_by_id(
                     session,
                     candidates[new_index]
@@ -367,45 +330,42 @@ async def add_candidate_to_whitelist(callback: CallbackQuery, state: FSMContext)
                         next_candidate,
                         new_index,
                         len(candidates),
-                        state
+                        state,
+                        lang
                     )
             else:
-                # Все кандидаты просмотрены
                 await callback.message.edit_text(
-                    "🎉 <b>Все рекомендованные каналы просмотрены!</b>\n\n"
-                    "Запустите новый поиск или вернитесь в меню.",
-                    reply_markup=get_channel_discovery_menu_keyboard()
+                    t("discovery.all_reviewed", lang),
+                    reply_markup=get_channel_discovery_menu_keyboard(lang)
                 )
-        
+
         except Exception as e:
             logger.error(f"Ошибка добавления канала: {e}", exc_info=True)
-            await callback.answer(f"❌ Ошибка: {str(e)}", show_alert=True)
+            await callback.answer(f"❌ {str(e)}", show_alert=True)
 
 
 ## Игнорировать кандидата
 @router.callback_query(F.data.startswith("candidate:ignore:"), OperatorFilter())
-async def ignore_candidate(callback: CallbackQuery, state: FSMContext):
+async def ignore_candidate(callback: CallbackQuery, state: FSMContext, lang: str = "ru"):
     """
     ## Отклонить кандидата
     """
     candidate_id = int(callback.data.split(":")[2])
-    
+
     async with get_session() as session:
-        # Помечаем как отклонённого
         await crud.mark_candidate_as_rejected(session, candidate_id)
         await session.commit()
-    
-    await callback.answer("🚫 Канал отклонён")
-    
-    # Переходим к следующему
+
+    await callback.answer(t("discovery.ignored_toast", lang))
+
     data = await state.get_data()
     candidates = data.get("candidates", [])
     current_index = data.get("current_index", 0)
-    
+
     if current_index + 1 < len(candidates):
         new_index = current_index + 1
         await state.update_data(current_index=new_index)
-        
+
         async with get_session() as session:
             next_candidate = await crud.get_channel_candidate_by_id(
                 session,
@@ -417,38 +377,37 @@ async def ignore_candidate(callback: CallbackQuery, state: FSMContext):
                     next_candidate,
                     new_index,
                     len(candidates),
-                    state
+                    state,
+                    lang
                 )
     else:
         await callback.message.edit_text(
-            "🎉 <b>Все рекомендованные каналы просмотрены!</b>",
-            reply_markup=get_channel_discovery_menu_keyboard()
+            t("discovery.all_reviewed_short", lang),
+            reply_markup=get_channel_discovery_menu_keyboard(lang)
         )
 
 
 ## Массовое добавление лучших каналов
 @router.callback_query(F.data == "channels:add_top", OperatorFilter())
-async def add_top_channels(callback: CallbackQuery):
+async def add_top_channels(callback: CallbackQuery, lang: str = "ru"):
     """
     ## Массовое добавление топ-каналов в whitelist
     """
     await callback.message.edit_text(
-        "⏳ Добавляю лучшие каналы в мониторинг..."
+        t("discovery.mass_add_progress", lang)
     )
-    
+
     async with get_session() as session:
-        # Получаем топ-кандидатов (score >= 7.0)
         top_candidates = await crud.get_pending_candidates(
             session=session,
             min_score=7.0,
             limit=20
         )
-        
+
         added_count = 0
         skipped_count = 0
-        
+
         for candidate in top_candidates:
-            # Проверяем, есть ли уже
             if candidate.username:
                 username_clean = candidate.username.lstrip('@')
                 all_chats = await crud.get_all_chats(session, enabled_only=False)
@@ -459,9 +418,8 @@ async def add_top_channels(callback: CallbackQuery):
                 if existing:
                     skipped_count += 1
                     continue
-            
+
             try:
-                # Добавляем
                 await crud.create_chat(
                     session=session,
                     tg_chat_id=candidate.tg_chat_id or 0,
@@ -472,43 +430,34 @@ async def add_top_channels(callback: CallbackQuery):
                     enabled=True,
                     priority=10 if candidate.ai_score >= 8 else 7
                 )
-                
+
                 await crud.mark_candidate_as_added(session, candidate.id)
                 added_count += 1
-            
+
             except Exception as e:
                 logger.error(f"Ошибка добавления {candidate.title}: {e}")
                 skipped_count += 1
-        
+
         await session.commit()
-    
-    result_text = (
-        "✅ <b>Массовое добавление завершено!</b>\n\n"
-        f"• Добавлено каналов: {added_count}\n"
-        f"• Пропущено (уже есть): {skipped_count}\n\n"
-        "Теперь эти каналы будут мониториться автоматически."
-    )
-    
+
     await callback.message.edit_text(
-        result_text,
-        reply_markup=get_channel_discovery_menu_keyboard()
+        t("discovery.mass_add_done", lang, added=added_count, skipped=skipped_count),
+        reply_markup=get_channel_discovery_menu_keyboard(lang)
     )
     await callback.answer()
 
 
 ## Назад к меню
 @router.callback_query(F.data == "channels:back", OperatorFilter())
-async def back_to_chats_menu(callback: CallbackQuery):
+async def back_to_chats_menu(callback: CallbackQuery, lang: str = "ru"):
     """
     ## Вернуться в меню чатов
     """
     from admin_bot.keyboards import get_chats_menu_keyboard
-    
+
     await callback.message.edit_text(
-        "💬 <b>Управление чатами</b>\n\n"
-        "Выберите действие:",
-        reply_markup=get_chats_menu_keyboard(),
+        t("discovery.back_title", lang),
+        reply_markup=get_chats_menu_keyboard(lang),
         parse_mode="HTML"
     )
     await callback.answer()
-

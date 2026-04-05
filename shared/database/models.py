@@ -450,6 +450,33 @@ class ChannelCandidate(Base):
         return f"<ChannelCandidate(id={self.id}, title='{self.title}', score={self.ai_score})>"
 
 
+## Модель таблицы operator_settings (singleton — одна строка)
+class OperatorSettings(Base):
+    """Настройки оператора (язык и т.д.)"""
+
+    __tablename__ = "operator_settings"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    telegram_id: Mapped[int] = mapped_column(BigInteger, nullable=False, unique=True, comment="Telegram User ID оператора")
+    language: Mapped[str] = mapped_column(
+        String(10), nullable=False, default="ru",
+        comment="Язык интерфейса: ru / en"
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.utcnow)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime, nullable=False,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow
+    )
+
+    __table_args__ = (
+        Index("idx_operator_settings_tg_id", "telegram_id"),
+    )
+
+    def __repr__(self) -> str:
+        return f"<OperatorSettings(id={self.id}, lang='{self.language}')>"
+
+
 ## Модель таблицы freelancer_profile (singleton — одна строка)
 class FreelancerProfile(Base):
     """Профиль фрилансера для генерации автоответов"""

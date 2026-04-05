@@ -24,6 +24,7 @@ from shared.database.crud import (
     delete_search_query,
     count_search_queries_today,
 )
+from shared.locales import t
 from config import settings
 
 logger = logging.getLogger(__name__)
@@ -37,19 +38,19 @@ class AddSearchQueryStates(StatesGroup):
 
 
 ## Клавиатура меню поиска
-def get_search_menu_keyboard():
+def get_search_menu_keyboard(lang: str = "ru"):
     builder = InlineKeyboardBuilder()
-    builder.button(text="📋 Мои фразы", callback_data="search:list")
-    builder.button(text="➕ Добавить фразу", callback_data="search:add")
-    builder.button(text="🚀 Запустить поиск", callback_data="search:run")
-    builder.button(text="🔙 В меню", callback_data="menu:main")
+    builder.button(text=t("search.btn_phrases", lang), callback_data="search:list")
+    builder.button(text=t("search.btn_add", lang), callback_data="search:add")
+    builder.button(text=t("search.btn_run", lang), callback_data="search:run")
+    builder.button(text=t("search.btn_back", lang), callback_data="menu:main")
     builder.adjust(2, 1, 1)
     return builder.as_markup()
 
 
 ## Показ меню поиска
 @router.callback_query(F.data == "search:menu", OperatorFilter())
-async def callback_search_main(callback: CallbackQuery):
+async def callback_search_main(callback: CallbackQuery, lang: str = "ru"):
     """
     Главное меню глобального поиска.
     """
@@ -58,18 +59,18 @@ async def callback_search_main(callback: CallbackQuery):
         today_count = await count_search_queries_today(session)
 
     text = (
-        f"🔍 {hbold('Глобальный поиск (Premium)')}\n\n"
-        f"📋 Фраз: {len(queries)}\n"
-        f"📊 Поисков сегодня: {today_count}/10\n\n"
-        f"{hitalic('Поиск использует Telegram search_global (Premium).')}"
+        t("search.menu_title", lang)
+        + t("search.phrases_count", lang, count=len(queries)) + "\n"
+        + t("search.today_count", lang, count=today_count) + "\n\n"
+        + hitalic(t("search.footer", lang))
     )
-    await callback.message.edit_text(text, reply_markup=get_search_menu_keyboard())
+    await callback.message.edit_text(text, reply_markup=get_search_menu_keyboard(lang))
     await callback.answer()
 
 
 ## Список фраз
 @router.callback_query(F.data == "search:list", OperatorFilter())
-async def callback_search_list(callback: CallbackQuery):
+async def callback_search_list(callback: CallbackQuery, lang: str = "ru"):
     """
     Список поисковых фраз.
     """
@@ -78,19 +79,19 @@ async def callback_search_list(callback: CallbackQuery):
 
     if not queries:
         await callback.message.edit_text(
-            f"📋 {hbold('Поисковые фразы')}\n\n"
-            f"{hitalic('Пока нет фраз. Добавьте первую!')}",
-            reply_markup=get_search_menu_keyboard()
+            t("search.phrases_title", lang) + "\n\n"
+            + hitalic(t("search.phrases_empty", lang)),
+            reply_markup=get_search_menu_keyboard(lang)
         )
         await callback.answer()
         return
 
-    lines = [f"📋 {hbold('Поисковые фразы')}", ""]
+    lines = [t("search.phrases_title", lang), ""]
     for q in queries:
         status = "✅" if q.enabled else "⛔"
-        used = q.last_used_at.replace(tzinfo=timezone.utc).astimezone(timezone(timedelta(hours=7))).strftime("%d.%m %H:%M") if q.last_used_at else "никогда"
+        used = q.last_used_at.replace(tzinfo=timezone.utc).astimezone(timezone(timedelta(hours=7))).strftime("%d.%m %H:%M") if q.last_used_at else t("search.phrase_used", lang)
         lines.append(f"{status} #{q.id} {hcode(q.query_text)}")
-        lines.append(f"   📊 {q.results_count or 0} результатов | 🕐 {used}")
+        lines.append(f"   📊 {q.results_count or 0} results | 🕐 {used}")
 
     text = "\n".join(lines)
 
@@ -101,8 +102,8 @@ async def callback_search_list(callback: CallbackQuery):
         builder.button(text=f"{toggle_text} #{q.id}", callback_data=f"search:toggle:{q.id}")
         builder.button(text=f"🗑 #{q.id}", callback_data=f"search:delete:{q.id}")
 
-    builder.button(text="➕ Добавить", callback_data="search:add")
-    builder.button(text="🔙 Назад", callback_data="search:menu")
+    builder.button(text=t("search.btn_add", lang), callback_data="search:add")
+    builder.button(text=t("menu.back", lang), callback_data="search:menu")
 
     ## Раскладка: пары toggle+delete, затем add и back
     rows = [2] * len(queries) + [1, 1]
@@ -112,34 +113,33 @@ async def callback_search_list(callback: CallbackQuery):
     await callback.answer()
 
 
-## Добавление фразы — начало
+## Добавление фразы -- начало
 @router.callback_query(F.data == "search:add", OperatorFilter())
-async def callback_search_add(callback: CallbackQuery, state: FSMContext):
+async def callback_search_add(callback: CallbackQuery, state: FSMContext, lang: str = "ru"):
     """
     Начинает процесс добавления поисковой фразы.
     """
     await state.set_state(AddSearchQueryStates.waiting_for_query_text)
     await callback.message.edit_text(
-        f"➕ {hbold('Добавление поисковой фразы')}\n\n"
-        f"Введите фразу для поиска:\n\n"
-        f"Примеры:\n"
-        f"• {hcode('нужен бот telegram')}\n"
-        f"• {hcode('ищу разработчика python')}\n"
-        f"• {hcode('автоматизация n8n')}\n\n"
-        f"Отправьте /cancel для отмены."
+        t("search.add_title", lang)
+        + t("search.add_prompt", lang)
+        + f"• {hcode('нужен бот telegram')}\n"
+        + f"• {hcode('ищу разработчика python')}\n"
+        + f"• {hcode('автоматизация n8n')}\n"
+        + t("search.add_cancel_prompt", lang)
     )
     await callback.answer()
 
 
-## Добавление фразы — ввод текста
+## Добавление фразы -- ввод текста
 @router.message(AddSearchQueryStates.waiting_for_query_text, OperatorFilter(), ~F.text.startswith("/"))
-async def process_search_query_text(message: Message, state: FSMContext):
+async def process_search_query_text(message: Message, state: FSMContext, lang: str = "ru"):
     """
     Сохраняет поисковую фразу.
     """
     query_text = message.text.strip()
     if len(query_text) < 3:
-        await message.answer("❌ Фраза слишком короткая. Минимум 3 символа.")
+        await message.answer(t("search.add_short", lang))
         return
 
     async with get_session() as session:
@@ -148,15 +148,14 @@ async def process_search_query_text(message: Message, state: FSMContext):
 
     await state.clear()
     await message.answer(
-        f"✅ Фраза добавлена: {hcode(query_text)}\n"
-        f"ID: #{query.id}",
-        reply_markup=get_search_menu_keyboard()
+        t("search.add_ok", lang, text=hcode(query_text), id=query.id),
+        reply_markup=get_search_menu_keyboard(lang)
     )
 
 
 ## Переключение статуса фразы
 @router.callback_query(F.data.startswith("search:toggle:"), OperatorFilter())
-async def callback_search_toggle(callback: CallbackQuery):
+async def callback_search_toggle(callback: CallbackQuery, lang: str = "ru"):
     """
     Включает/выключает поисковую фразу.
     """
@@ -169,19 +168,19 @@ async def callback_search_toggle(callback: CallbackQuery):
             new_status = not query.enabled
             await update_search_query_status(session, query_id, new_status)
             await session.commit()
-            status_text = "включена" if new_status else "выключена"
-            await callback.answer(f"{'✅' if new_status else '⛔'} Фраза {status_text}")
+            status_text = t("search.toggle_on", lang) if new_status else t("search.toggle_off", lang)
+            await callback.answer(status_text)
         else:
-            await callback.answer("❌ Фраза не найдена", show_alert=True)
+            await callback.answer(t("search.not_found", lang), show_alert=True)
             return
 
     ## Обновляем список
-    await callback_search_list(callback)
+    await callback_search_list(callback, lang)
 
 
 ## Удаление фразы
 @router.callback_query(F.data.startswith("search:delete:"), OperatorFilter())
-async def callback_search_delete(callback: CallbackQuery):
+async def callback_search_delete(callback: CallbackQuery, lang: str = "ru"):
     """
     Удаляет поисковую фразу.
     """
@@ -192,21 +191,21 @@ async def callback_search_delete(callback: CallbackQuery):
         await session.commit()
 
     if success:
-        await callback.answer("🗑 Фраза удалена")
+        await callback.answer(t("search.deleted", lang))
     else:
-        await callback.answer("❌ Фраза не найдена", show_alert=True)
+        await callback.answer(t("search.not_found", lang), show_alert=True)
         return
 
-    await callback_search_list(callback)
+    await callback_search_list(callback, lang)
 
 
 ## Запуск поиска
 @router.callback_query(F.data == "search:run", OperatorFilter())
-async def callback_search_run(callback: CallbackQuery):
+async def callback_search_run(callback: CallbackQuery, lang: str = "ru"):
     """
     Запускает глобальный поиск через Lead Listener API.
     """
-    await callback.answer("⏳ Запуск поиска...")
+    await callback.answer(t("search.run_starting", lang))
 
     try:
         ## Вызываем API Lead Listener
@@ -220,44 +219,44 @@ async def callback_search_run(callback: CallbackQuery):
             data = response.json()
             stats = data.get("stats", {})
 
+            result_text = (
+                t("search.run_done", lang)
+                + t("search.run_queries", lang, count=stats.get('queries_executed', 0)) + "\n"
+                + t("search.run_found", lang, count=stats.get('total_found', 0)) + "\n"
+                + t("search.run_leads", lang, count=stats.get('total_leads', 0)) + "\n\n"
+            )
+            if stats.get("errors"):
+                result_text += t("search.run_errors", lang, errors=', '.join(stats.get('errors', [])))
+
             await callback.message.edit_text(
-                f"✅ {hbold('Поиск завершён')}\n\n"
-                f"🔍 Запросов: {stats.get('queries_executed', 0)}\n"
-                f"📊 Найдено: {stats.get('total_found', 0)}\n"
-                f"🎯 Лидов: {stats.get('total_leads', 0)}\n\n"
-                + (
-                    f"⚠️ Ошибки: {', '.join(stats.get('errors', []))}"
-                    if stats.get("errors")
-                    else ""
-                ),
-                reply_markup=get_search_menu_keyboard()
+                result_text,
+                reply_markup=get_search_menu_keyboard(lang)
             )
         else:
             error = response.json().get("error", "Unknown error")
             await callback.message.edit_text(
-                f"❌ {hbold('Ошибка поиска')}\n\n{error}",
-                reply_markup=get_search_menu_keyboard()
+                t("search.run_error", lang, error=error),
+                reply_markup=get_search_menu_keyboard(lang)
             )
 
     except httpx.TimeoutException:
         await callback.message.edit_text(
-            f"⏳ {hbold('Поиск запущен')}\n\n"
-            f"Результаты появятся в лидах.",
-            reply_markup=get_search_menu_keyboard()
+            t("search.run_timeout", lang),
+            reply_markup=get_search_menu_keyboard(lang)
         )
     except Exception as e:
-        logger.error(f"❌ Ошибка запуска поиска: {e}")
+        logger.error(f"Ошибка запуска поиска: {e}")
         await callback.message.edit_text(
-            f"❌ {hbold('Ошибка')}\n\n{str(e)[:200]}",
-            reply_markup=get_search_menu_keyboard()
+            t("search.run_unexpected", lang, error=str(e)[:200]),
+            reply_markup=get_search_menu_keyboard(lang)
         )
 
 
 ## Отмена
 @router.message(F.text == "/cancel", AddSearchQueryStates())
-async def cancel_search_add(message: Message, state: FSMContext):
+async def cancel_search_add(message: Message, state: FSMContext, lang: str = "ru"):
     await state.clear()
     await message.answer(
-        "❌ Добавление отменено.",
-        reply_markup=get_search_menu_keyboard()
+        t("search.add_cancelled", lang),
+        reply_markup=get_search_menu_keyboard(lang)
     )

@@ -13,6 +13,7 @@ from sqlalchemy.orm import selectinload
 from shared.database.models import (
     Account, Chat, Lead, LeadAIData, Reply, ChannelCandidate,
     FreelancerProfile, SearchQuery, SearchGlobalResult,
+    OperatorSettings,
     LeadStatus, CommunicationStyle, ChatType, ChannelSource
 )
 
@@ -1058,4 +1059,39 @@ async def count_search_queries_today(session: AsyncSession) -> int:
         )
     )
     return result.scalar_one()
+
+
+# ==================== OPERATOR SETTINGS ====================
+
+async def get_operator_settings(session: AsyncSession, telegram_id: int) -> Optional[OperatorSettings]:
+    """Получить настройки оператора по Telegram ID"""
+    result = await session.execute(
+        select(OperatorSettings).where(OperatorSettings.telegram_id == telegram_id)
+    )
+    return result.scalar_one_or_none()
+
+
+async def get_operator_language(session: AsyncSession, telegram_id: int) -> str:
+    """Получить язык оператора (fallback: 'ru')"""
+    settings = await get_operator_settings(session, telegram_id)
+    return settings.language if settings else "ru"
+
+
+async def set_operator_language(session: AsyncSession, telegram_id: int, language: str) -> OperatorSettings:
+    """Установить язык оператора (создаёт запись если её нет)"""
+    settings = await get_operator_settings(session, telegram_id)
+    if settings:
+        settings.language = language
+        settings.updated_at = datetime.utcnow()
+        await session.flush()
+        return settings
+    else:
+        settings = OperatorSettings(
+            telegram_id=telegram_id,
+            language=language
+        )
+        session.add(settings)
+        await session.flush()
+        await session.refresh(settings)
+        return settings
 

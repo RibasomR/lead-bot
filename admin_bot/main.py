@@ -19,6 +19,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from config import settings, validate_config
 from admin_bot.handlers import setup_handlers
+from admin_bot.middleware import LanguageMiddleware
 from admin_bot.api_server import get_api_server
 from shared.database.engine import init_db
 from shared.utils.logging import setup_logging as setup_unified_logging
@@ -60,6 +61,9 @@ async def init_bot() -> tuple[Bot, Dispatcher]:
     storage = MemoryStorage()
     dispatcher = Dispatcher(storage=storage)
     
+    # Подключаем middleware для языка
+    dispatcher.update.middleware(LanguageMiddleware())
+
     # Подключаем роутеры с хендлерами
     main_router = setup_handlers()
     dispatcher.include_router(main_router)
@@ -100,13 +104,18 @@ async def on_startup(bot: Bot, api_runner):
         logger.critical(f"❌ Не удалось инициализировать БД: {e}")
         raise
     
-    ## Регистрация команд в меню бота
+    ## Регистрация команд в меню бота (мультиязычные)
     await bot.set_my_commands([
         BotCommand(command="start", description="Главное меню"),
         BotCommand(command="leads", description="Список лидов"),
         BotCommand(command="help", description="Справка"),
-    ])
-    logger.info("✅ Команды бота зарегистрированы")
+    ], language_code="ru")
+    await bot.set_my_commands([
+        BotCommand(command="start", description="Main menu"),
+        BotCommand(command="leads", description="Lead list"),
+        BotCommand(command="help", description="Help"),
+    ], language_code="en")
+    logger.info("✅ Команды бота зарегистрированы (RU/EN)")
 
     logger.info("✅ Admin Bot готов к работе")
 

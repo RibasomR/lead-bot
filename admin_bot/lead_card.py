@@ -13,6 +13,7 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder
 from aiogram.utils.markdown import hbold, hcode, hitalic, hlink
 
 from shared.database.models import Lead, Chat, LeadAIData
+from shared.locales import t
 
 ## Разрешённые HTML-теги для Telegram (всё остальное удаляется)
 _ALLOWED_TAGS_RE = re.compile(
@@ -49,6 +50,7 @@ def format_lead_card(
     lead: Lead,
     ai_data: Optional[LeadAIData] = None,
     chat: Optional[Chat] = None,
+    lang: str = "ru",
 ) -> str:
     """
     Компактная карточка лида с данными классификатора и черновиком.
@@ -65,7 +67,7 @@ def format_lead_card(
     lines = []
 
     ## Заголовок: summary + оценка релевантности
-    title = ai_data.summary[:500] if ai_data and ai_data.summary else "Новый лид"
+    title = ai_data.summary[:500] if ai_data and ai_data.summary else t("leads.card.new_lead", lang)
     if ai_data and ai_data.relevance_score:
         score = int(ai_data.relevance_score)
         lines.append(f"🎯 {hbold(title)} ({score}/10)")
