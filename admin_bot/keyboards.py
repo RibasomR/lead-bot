@@ -122,10 +122,11 @@ def get_account_actions_keyboard(
     else:
         builder.button(text=t("accounts.btn_enable", lang), callback_data=f"account:enable:{account_id}")
 
+    builder.button(text=t("accounts.btn_role", lang), callback_data=f"account:change_role:{account_id}")
     builder.button(text=t("accounts.btn_delete", lang), callback_data=f"account:delete:{account_id}")
     builder.button(text=t("menu.back_to_list", lang), callback_data="accounts:list")
 
-    builder.adjust(2, 1, 1)
+    builder.adjust(2, 2, 1)
     return builder.as_markup()
 
 

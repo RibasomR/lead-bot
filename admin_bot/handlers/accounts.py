@@ -396,7 +396,66 @@ async def callback_disable_account(callback: CallbackQuery, lang: str = "ru"):
             await callback.answer(t("accounts.disable_error", lang), show_alert=True)
 
 
-## Callback изменения стиля
+## Callback изменения роли
+@router.callback_query(F.data.startswith("account:change_role:"), OperatorFilter())
+async def callback_change_role(callback: CallbackQuery, lang: str = "ru"):
+    """
+    Показывает меню выбора роли аккаунта.
+    """
+    account_id = int(callback.data.split(":")[2])
+
+    from aiogram.utils.keyboard import InlineKeyboardBuilder
+    builder = InlineKeyboardBuilder()
+    for role in ("monitor", "reply", "both"):
+        builder.button(
+            text=t(f"accounts.role_names.{role}", lang),
+            callback_data=f"account:set_role:{account_id}:{role}"
+        )
+    builder.button(text=t("menu.back", lang), callback_data=f"account:view:{account_id}")
+    builder.adjust(1)
+
+    await callback.message.edit_text(
+        t("accounts.role_prompt", lang),
+        reply_markup=builder.as_markup()
+    )
+    await callback.answer()
+
+
+## Callback установки роли
+@router.callback_query(F.data.startswith("account:set_role:"), OperatorFilter())
+async def callback_set_role(callback: CallbackQuery, lang: str = "ru"):
+    """
+    Сохраняет новую роль аккаунта.
+    """
+    parts = callback.data.split(":")
+    account_id = int(parts[2])
+    new_role = parts[3]
+
+    async with get_session() as session:
+        result = await session.execute(
+            update(Account)
+            .where(Account.id == account_id)
+            .values(role=new_role)
+        )
+        await session.commit()
+
+        if result.rowcount > 0:
+            account = await get_account_by_id(session, account_id)
+            role_name = t(f"accounts.role_names.{new_role}", lang)
+            await callback.answer(t("accounts.role_changed", lang, role=role_name), show_alert=False)
+            is_authorized = account.tg_user_id is not None and account.tg_user_id > 0
+            await callback.message.edit_text(
+                t("accounts.card_title", lang, label=account.label)
+                + t("accounts.card_db_id", lang, id=account.id)
+                + t("accounts.card_role", lang, role=role_name)
+                + (t("accounts.card_status_on", lang) if account.enabled else t("accounts.card_status_off", lang)),
+                reply_markup=get_account_actions_keyboard(account.id, account.enabled, is_authorized, lang)
+            )
+        else:
+            await callback.answer(t("accounts.role_error", lang), show_alert=True)
+
+
+## Callback изменения стиля (legacy — оставлен для совместимости)
 @router.callback_query(F.data.startswith("account:change_style:"), OperatorFilter())
 async def callback_change_style(callback: CallbackQuery, lang: str = "ru"):
     """

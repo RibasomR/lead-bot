@@ -404,6 +404,8 @@ STRINGS = {
         "role_prompt": "🎭 <b>Select account role:</b>\n\n👁 <b>Monitoring</b> — subscribed to chats, listens to messages\n✉️ <b>Replies + search</b> — sends replies to leads, Premium search",
         "role_monitor": "👁 Chat monitoring",
         "role_reply": "✉️ Replies + search",
+        "role_changed": "✅ Role changed to: {role}",
+        "role_error": "❌ Error changing role",
         "data_lost": "❌ Data lost",
         "added_ok": (
             "✅ <b>Account added!</b>\n\n"
@@ -436,7 +438,7 @@ STRINGS = {
         "btn_auth": "🔐 Authorize",
         "btn_disable": "🔴 Deactivate",
         "btn_enable": "🟢 Activate",
-        "btn_style": "🎨 Change style",
+        "btn_role": "🎭 Change role",
         "btn_delete": "🗑 Delete",
         ## Actions
         "enabled": "✅ Account activated",
