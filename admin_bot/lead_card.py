@@ -106,7 +106,7 @@ def format_lead_card(
     if len(plain_text) > 600:
         ## Для длинных сообщений — обрезаем plain text, чтобы не ломать HTML-теги
         message_text = html_escape(plain_text[:600]) + "…"
-    lines.append(f"📝 {hbold('Сообщение:')}")
+    lines.append(t("leads.card.message_label", lang))
     lines.append(message_text)
 
     ## Ссылка (с разделителем)
@@ -123,7 +123,7 @@ def format_lead_card(
     draft_display = None
     if draft:
         lines.append("")
-        lines.append(f"📨 {hbold('Черновик:')}")
+        lines.append(t("leads.card.draft_label", lang))
         draft_display = draft if len(draft) <= 3000 else draft[:3000] + "…"
         lines.append(hitalic(draft_display))
 
@@ -153,6 +153,7 @@ def get_lead_card_keyboard(
     lead_id: int,
     has_draft: bool = False,
     has_ai_data: bool = False,
+    lang: str = "ru",
 ) -> InlineKeyboardMarkup:
     """
     Inline-клавиатура для действий с лидом (просмотр из списка).
@@ -170,30 +171,30 @@ def get_lead_card_keyboard(
     if has_draft:
         ## Черновик есть → Отправить / Перегенерировать / Редактировать / Пропустить
         builder.button(
-            text="✅ Отправить",
+            text=t("leads.btn.send", lang),
             callback_data=f"lead:send_draft:{lead_id}"
         )
         builder.button(
-            text="🔄 Перегенерировать",
+            text=t("leads.btn.regenerate", lang),
             callback_data=f"lead:regenerate:{lead_id}"
         )
         builder.button(
-            text="✏️ Редактировать",
+            text=t("leads.btn.edit", lang),
             callback_data=f"lead:edit_draft:{lead_id}"
         )
     else:
         ## Черновика нет
         builder.button(
-            text="🤖 Сгенерировать ответ",
+            text=t("leads.btn.generate", lang),
             callback_data=f"lead:regenerate:{lead_id}"
         )
 
     ## Пропустить + Список
     builder.button(
-        text="❌ Пропустить",
+        text=t("leads.btn.skip", lang),
         callback_data=f"lead:ignore:{lead_id}"
     )
-    builder.button(text="🔙 Список", callback_data="menu:leads")
+    builder.button(text=t("leads.btn.list", lang), callback_data="menu:leads")
 
     ## Раскладка кнопок
     if has_draft:
@@ -208,6 +209,7 @@ def get_lead_card_keyboard(
 def get_lead_push_keyboard(
     lead_id: int,
     has_draft: bool = False,
+    lang: str = "ru",
 ) -> InlineKeyboardMarkup:
     """
     Inline-клавиатура для push-уведомления о новом лиде.
@@ -224,29 +226,29 @@ def get_lead_push_keyboard(
 
     if has_draft:
         builder.button(
-            text="✅ Отправить",
+            text=t("leads.btn.send", lang),
             callback_data=f"lead:send_draft:{lead_id}"
         )
         builder.button(
-            text="🔄 Перегенерировать",
+            text=t("leads.btn.regenerate", lang),
             callback_data=f"lead:regenerate:{lead_id}"
         )
         builder.button(
-            text="✏️ Редактировать",
+            text=t("leads.btn.edit", lang),
             callback_data=f"lead:edit_draft:{lead_id}"
         )
         builder.button(
-            text="❌ Пропустить",
+            text=t("leads.btn.skip", lang),
             callback_data=f"lead:ignore:{lead_id}"
         )
         builder.adjust(1, 2, 1)
     else:
         builder.button(
-            text="🤖 Сгенерировать ответ",
+            text=t("leads.btn.generate", lang),
             callback_data=f"lead:regenerate:{lead_id}"
         )
         builder.button(
-            text="❌ Пропустить",
+            text=t("leads.btn.skip", lang),
             callback_data=f"lead:ignore:{lead_id}"
         )
         builder.adjust(1, 1)
@@ -258,7 +260,8 @@ def get_lead_push_keyboard(
 def get_send_confirmation_keyboard(
     lead_id: int,
     account_id: int,
-    variant_index: Optional[int] = None
+    variant_index: Optional[int] = None,
+    lang: str = "ru",
 ) -> InlineKeyboardMarkup:
     """
     Клавиатура подтверждения отправки.
@@ -277,9 +280,9 @@ def get_send_confirmation_keyboard(
     if variant_index is not None:
         callback_data += f":{variant_index}"
 
-    builder.button(text="✅ Отправить", callback_data=callback_data)
-    builder.button(text="✏️ Редактировать", callback_data=f"lead:edit_text:{lead_id}")
-    builder.button(text="❌ Отменить", callback_data=f"lead:show:{lead_id}")
+    builder.button(text=t("leads.btn.send", lang), callback_data=callback_data)
+    builder.button(text=t("leads.btn.edit", lang), callback_data=f"lead:edit_text:{lead_id}")
+    builder.button(text=t("leads.btn.cancel", lang), callback_data=f"lead:show:{lead_id}")
 
     builder.adjust(1)
     return builder.as_markup()
@@ -288,18 +291,19 @@ def get_send_confirmation_keyboard(
 ## Клавиатура выбора варианта ответа (deprecated, оставлено для совместимости)
 def get_reply_variants_keyboard(
     lead_id: int,
-    num_variants: int = 3
+    num_variants: int = 3,
+    lang: str = "ru",
 ) -> InlineKeyboardMarkup:
     """Deprecated: используйте get_lead_card_keyboard с has_draft=True"""
     builder = InlineKeyboardBuilder()
 
     for i in range(num_variants):
         builder.button(
-            text=f"✉️ Вариант {i + 1}",
+            text=f"✉️ {t('leads.variant_n', lang, n=i + 1)}",
             callback_data=f"lead:use_variant:{lead_id}:{i}"
         )
 
-    builder.button(text="🔙 Назад", callback_data=f"lead:show:{lead_id}")
+    builder.button(text=t("menu.back", lang), callback_data=f"lead:show:{lead_id}")
     builder.adjust(1)
     return builder.as_markup()
 
@@ -308,7 +312,8 @@ def get_reply_variants_keyboard(
 def format_leads_list(
     leads: List[Lead],
     page: int,
-    total_pages: int
+    total_pages: int,
+    lang: str = "ru",
 ) -> str:
     """
     Список лидов с пагинацией.
@@ -317,15 +322,16 @@ def format_leads_list(
         leads: Список лидов
         page: Текущая страница
         total_pages: Всего страниц
+        lang: Язык интерфейса
 
     Returns:
         HTML-текст списка
     """
     if not leads:
-        return "🔍 Лидов не найдено."
+        return t("leads.no_leads", lang)
 
     lines = [
-        hbold(f"📬 Лиды ({page + 1}/{total_pages})"),
+        hbold(t("leads.title", lang, page=page + 1, total=total_pages)),
         ""
     ]
 
@@ -351,7 +357,8 @@ def format_leads_list(
 def get_leads_list_keyboard(
     leads: List[Lead],
     page: int,
-    total_pages: int
+    total_pages: int,
+    lang: str = "ru",
 ) -> InlineKeyboardMarkup:
     """
     Клавиатура списка лидов с пагинацией.
@@ -384,7 +391,7 @@ def get_leads_list_keyboard(
     if page < total_pages - 1:
         builder.button(text="▶️", callback_data=f"leads:page:{page + 1}")
 
-    builder.button(text="🔙 В меню", callback_data="menu:main")
+    builder.button(text=t("menu.back_to_menu", lang), callback_data="menu:main")
 
     ## Лиды по 2 в строке, затем пагинация, затем меню
     num_leads = len(leads)

@@ -348,6 +348,9 @@ STRINGS = {
         "join_private_label": "\n🔒 <b>Приватных каналов:</b> {count}\n",
         "join_pending_label": "⏳ <b>Заявки поданы:</b> {count}\n",
         "join_errors_label": "❌ <b>Других ошибок:</b> {count}\n",
+        "join_report_title": "📋 <b>Подробный отчёт</b>\n",
+        "join_flood_label": "\n⏳ <b>FloodWait:</b> {count}\n",
+        "join_more": "...+{count} ещё",
         "join_details_btn": "📋 Подробнее об ошибках",
         "join_api_error": "❌ <b>Ошибка автоподписки</b>\n\nStatus: {status}\nError: {error}",
         "join_timeout": (

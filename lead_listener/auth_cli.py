@@ -40,23 +40,23 @@ class AuthCLI:
         logger.remove()  # Убираем логи для чистого вывода
         
         print("=" * 60)
-        print("🔐 LeadHunter - Авторизация Telegram аккаунтов")
+        print("🔐 LeadHunter - Telegram Account Authorization")
         print("=" * 60)
         print()
-        
-        # Инициализация БД
+
+        # Initialize DB
         await init_db()
-        
+
         while True:
-            print("\n📋 Главное меню:")
-            print("  1. Авторизовать существующий аккаунт")
-            print("  2. Добавить новый аккаунт")
-            print("  3. Просмотреть аккаунты")
-            print("  4. Удалить аккаунт")
-            print("  0. Выход")
+            print("\n📋 Main menu:")
+            print("  1. Authorize existing account")
+            print("  2. Add new account")
+            print("  3. View accounts")
+            print("  4. Delete account")
+            print("  0. Exit")
             print()
 
-            choice = input("Выберите действие: ").strip()
+            choice = input("Select action: ").strip()
 
             if choice == '1':
                 await self._auth_existing_account()
@@ -67,67 +67,67 @@ class AuthCLI:
             elif choice == '4':
                 await self._remove_account()
             elif choice == '0':
-                print("\n👋 До свидания!")
+                print("\n👋 Goodbye!")
                 break
             else:
-                print("❌ Неверный выбор. Попробуйте ещё раз.")
+                print("❌ Invalid choice. Please try again.")
                 
     async def _auth_existing_account(self):
         """Авторизовать существующий аккаунт (уже добавленный через бот)"""
         print("\n" + "=" * 60)
-        print("🔑 Авторизация существующего аккаунта")
+        print("🔑 Authorize Existing Account")
         print("=" * 60)
 
-        ## Показываем неавторизованные аккаунты (tg_user_id == 0 или disabled)
+        ## Show unauthorized accounts (tg_user_id == 0 or disabled)
         async with get_session() as session:
             accounts = await get_all_accounts(session)
 
         if not accounts:
-            print("\n⚠️ Нет аккаунтов в БД. Сначала добавьте через бот или пункт 2.")
+            print("\n⚠️ No accounts in DB. Add one via bot or option 2.")
             return
 
-        ## Фильтруем неавторизованные
+        ## Filter unauthorized
         unauthed = [a for a in accounts if a.tg_user_id == 0 or not a.enabled]
 
-        print("\n📋 Аккаунты, требующие авторизации:")
+        print("\n📋 Accounts requiring authorization:")
         if unauthed:
             for a in unauthed:
                 print(f"  🆔 {a.id} | {a.label} | 📞 {a.phone or '?'} | tg_id={a.tg_user_id}")
         else:
-            print("  ✅ Все аккаунты авторизованы!")
-            print("\n📋 Все аккаунты:")
+            print("  ✅ All accounts are authorized!")
+            print("\n📋 All accounts:")
             for a in accounts:
                 status = "✅" if a.enabled else "❌"
                 print(f"  {status} 🆔 {a.id} | {a.label} | 📞 {a.phone or '?'} | tg_id={a.tg_user_id}")
 
-        account_id = input("\nВведите ID аккаунта для авторизации (0 для отмены): ").strip()
+        account_id = input("\nEnter account ID to authorize (0 to cancel): ").strip()
 
         try:
             account_id = int(account_id)
         except ValueError:
-            print("❌ Неверный ID")
+            print("❌ Invalid ID")
             return
 
         if account_id == 0:
-            print("❌ Отменено")
+            print("❌ Cancelled")
             return
 
-        ## Получаем аккаунт
+        ## Load account
         async with get_session() as session:
             account = await get_account_by_id(session, account_id)
 
         if not account:
-            print(f"❌ Аккаунт с ID {account_id} не найден")
+            print(f"❌ Account with ID {account_id} not found")
             return
 
         phone = account.phone
         if not phone:
-            phone = input("📞 Номер телефона не указан. Введите (например +79991234567): ").strip()
+            phone = input("📞 Phone not set. Enter phone number (e.g. +79991234567): ").strip()
             if not phone.startswith('+'):
-                print("❌ Номер должен начинаться с '+'")
+                print("❌ Phone must start with '+'")
                 return
 
-        print(f"\n🔄 Авторизация аккаунта '{account.label}' ({phone})...")
+        print(f"\n🔄 Authorizing account '{account.label}' ({phone})...")
 
         ## Создаём Telethon клиент
         session_file = settings.sessions_dir / f"temp_auth_{phone.replace('+', '')}.session"
@@ -142,26 +142,26 @@ class AuthCLI:
             await self.client.connect()
 
             if await self.client.is_user_authorized():
-                print("✅ Уже авторизован!")
+                print("✅ Already authorized!")
                 me = await self.client.get_me()
             else:
-                print("📨 Отправка кода авторизации...")
+                print("📨 Sending authorization code...")
                 await self.client.send_code_request(phone)
 
-                code = input("📨 Введите код из Telegram: ").strip()
+                code = input("📨 Enter code from Telegram: ").strip()
 
                 try:
                     await self.client.sign_in(phone, code)
                     me = await self.client.get_me()
                 except SessionPasswordNeededError:
-                    password = input("🔒 Введите пароль 2FA: ").strip()
+                    password = input("🔒 Enter 2FA password: ").strip()
                     await self.client.sign_in(password=password)
                     me = await self.client.get_me()
 
-            print(f"\n✅ Авторизация успешна!")
-            print(f"   👤 Имя: {me.first_name} {me.last_name or ''}")
+            print(f"\n✅ Authorization successful!")
+            print(f"   👤 Name: {me.first_name} {me.last_name or ''}")
             print(f"   🆔 Telegram ID: {me.id}")
-            print(f"   📝 Username: @{me.username or 'не установлен'}")
+            print(f"   📝 Username: @{me.username or 'not set'}")
 
             ## Обновляем аккаунт в БД
             async with get_session() as session:
@@ -175,20 +175,20 @@ class AuthCLI:
                 final_session.unlink()
             session_file.rename(final_session)
 
-            print(f"\n✅ Аккаунт '{account.label}' авторизован и активирован!")
-            print(f"   📁 Сессия: account_{account_id}.session")
+            print(f"\n✅ Account '{account.label}' authorized and activated!")
+            print(f"   📁 Session: account_{account_id}.session")
 
         except PhoneNumberInvalidError:
-            print("❌ Неверный номер телефона")
+            print("❌ Invalid phone number")
         except PhoneCodeInvalidError:
-            print("❌ Неверный код авторизации")
+            print("❌ Invalid authorization code")
         except PhoneCodeExpiredError:
-            print("❌ Код авторизации истёк. Попробуйте снова.")
+            print("❌ Authorization code expired. Please try again.")
         except FloodWaitError as e:
-            print(f"❌ Слишком много попыток. Подождите {e.seconds} секунд.")
+            print(f"❌ Too many attempts. Wait {e.seconds} seconds.")
         except Exception as e:
-            logger.exception(f"❌ Ошибка авторизации: {e}")
-            print(f"❌ Произошла ошибка: {e}")
+            logger.exception(f"❌ Authorization error: {e}")
+            print(f"❌ An error occurred: {e}")
         finally:
             if self.client:
                 await self.client.disconnect()
@@ -196,30 +196,30 @@ class AuthCLI:
     async def _add_account(self):
         """Добавить новый аккаунт через авторизацию"""
         print("\n" + "=" * 60)
-        print("📱 Добавление нового аккаунта")
+        print("📱 Add New Account")
         print("=" * 60)
-        
-        # Ввод номера телефона
-        phone = input("\nВведите номер телефона (в международном формате, например +79991234567): ").strip()
-        
+
+        # Enter phone number
+        phone = input("\nEnter phone number (international format, e.g. +79991234567): ").strip()
+
         if not phone.startswith('+'):
-            print("❌ Номер должен начинаться с '+'")
+            print("❌ Phone must start with '+'")
             return
-            
-        # Ввод метки аккаунта
-        label = input("Введите название аккаунта (например, 'Рабочий 1'): ").strip()
-        
+
+        # Enter account label
+        label = input("Enter account name (e.g. 'Work account 1'): ").strip()
+
         if not label:
-            print("❌ Название не может быть пустым")
+            print("❌ Name cannot be empty")
             return
-            
-        # Выбор стиля по умолчанию
-        print("\n📝 Выберите стиль общения по умолчанию:")
-        print("  1. Вежливый/деловой (polite)")
-        print("  2. Неформальный/дружеский (friendly)")
-        print("  3. Агрессивный/жёсткий (aggressive)")
-        
-        style_choice = input("Ваш выбор (по умолчанию 2): ").strip() or '2'
+
+        # Select default communication style
+        print("\n📝 Select default communication style:")
+        print("  1. Polite/formal (polite)")
+        print("  2. Casual/friendly (friendly)")
+        print("  3. Assertive/aggressive (aggressive)")
+
+        style_choice = input("Your choice (default 2): ").strip() or '2'
         
         style_map = {
             '1': CommunicationStyle.POLITE.value,
@@ -242,31 +242,31 @@ class AuthCLI:
             await self.client.connect()
             
             if await self.client.is_user_authorized():
-                print("✅ Аккаунт уже авторизован")
+                print("✅ Account already authorized")
                 me = await self.client.get_me()
             else:
-                # Запрос кода авторизации
-                print("\n🔄 Отправка кода авторизации...")
+                # Request authorization code
+                print("\n🔄 Sending authorization code...")
                 await self.client.send_code_request(phone)
-                
-                code = input("📨 Введите код из Telegram: ").strip()
-                
+
+                code = input("📨 Enter code from Telegram: ").strip()
+
                 try:
-                    # Попытка входа с кодом
+                    # Try signing in with code
                     await self.client.sign_in(phone, code)
                     me = await self.client.get_me()
-                    
+
                 except SessionPasswordNeededError:
-                    # Нужен двухфакторный пароль
-                    password = input("🔒 Введите пароль 2FA: ").strip()
+                    # 2FA password required
+                    password = input("🔒 Enter 2FA password: ").strip()
                     await self.client.sign_in(password=password)
                     me = await self.client.get_me()
-                    
-            # Успешная авторизация
-            print(f"\n✅ Авторизация успешна!")
-            print(f"   👤 Имя: {me.first_name} {me.last_name or ''}")
+
+            # Authorization successful
+            print(f"\n✅ Authorization successful!")
+            print(f"   👤 Name: {me.first_name} {me.last_name or ''}")
             print(f"   🆔 ID: {me.id}")
-            print(f"   📝 Username: @{me.username or 'не установлен'}")
+            print(f"   📝 Username: @{me.username or 'not set'}")
             
             # Сохранение в БД
             async with get_session() as session:
@@ -274,11 +274,11 @@ class AuthCLI:
                 existing = await get_account_by_tg_id(session, me.id)
                 
                 if existing:
-                    print(f"\n⚠️ Аккаунт с ID {me.id} уже существует в БД (label: '{existing.label}')")
-                    overwrite = input("Перезаписать? (y/n): ").strip().lower()
-                    
+                    print(f"\n⚠️ Account with ID {me.id} already exists in DB (label: '{existing.label}')")
+                    overwrite = input("Overwrite? (y/n): ").strip().lower()
+
                     if overwrite != 'y':
-                        print("❌ Отменено")
+                        print("❌ Cancelled")
                         return
                         
                     # Удаляем старый
@@ -303,22 +303,22 @@ class AuthCLI:
                 final_session = settings.sessions_dir / f"session_{me.id}.session"
                 session_file.rename(final_session)
                 
-                print(f"\n✅ Аккаунт '{label}' успешно добавлен в систему!")
-                print(f"   🆔 ID в БД: {account.id}")
+                print(f"\n✅ Account '{label}' successfully added!")
+                print(f"   🆔 DB ID: {account.id}")
                 print(f"   📱 Telegram ID: {account.tg_user_id}")
-                print(f"   🎨 Стиль: {account.style_default}")
-                
+                print(f"   🎨 Style: {account.style_default}")
+
         except PhoneNumberInvalidError:
-            print("❌ Неверный номер телефона")
+            print("❌ Invalid phone number")
         except PhoneCodeInvalidError:
-            print("❌ Неверный код авторизации")
+            print("❌ Invalid authorization code")
         except PhoneCodeExpiredError:
-            print("❌ Код авторизации истёк. Попробуйте снова.")
+            print("❌ Authorization code expired. Please try again.")
         except FloodWaitError as e:
-            print(f"❌ Слишком много попыток. Подождите {e.seconds} секунд.")
+            print(f"❌ Too many attempts. Wait {e.seconds} seconds.")
         except Exception as e:
-            logger.exception(f"❌ Ошибка авторизации: {e}")
-            print(f"❌ Произошла ошибка: {e}")
+            logger.exception(f"❌ Authorization error: {e}")
+            print(f"❌ An error occurred: {e}")
         finally:
             if self.client:
                 await self.client.disconnect()
@@ -326,76 +326,76 @@ class AuthCLI:
     async def _list_accounts(self):
         """Показать список всех аккаунтов"""
         print("\n" + "=" * 60)
-        print("📋 Список аккаунтов")
+        print("📋 Account List")
         print("=" * 60)
-        
+
         async with get_session() as session:
             accounts = await get_all_accounts(session)
-            
+
             if not accounts:
-                print("\n⚠️ Нет зарегистрированных аккаунтов")
+                print("\n⚠️ No registered accounts")
                 return
-                
+
             for account in accounts:
-                status = "✅ Активен" if account.enabled else "❌ Отключён"
+                status = "✅ Active" if account.enabled else "❌ Disabled"
                 print(f"\n🆔 ID: {account.id}")
-                print(f"   📛 Название: {account.label}")
+                print(f"   📛 Name: {account.label}")
                 print(f"   📱 Telegram ID: {account.tg_user_id}")
-                print(f"   👤 Username: @{account.username or 'не установлен'}")
-                print(f"   📞 Телефон: {account.phone or 'не указан'}")
-                print(f"   🎨 Стиль: {account.style_default}")
-                print(f"   📊 Статус: {status}")
-                print(f"   📅 Создан: {account.created_at.strftime('%d.%m.%Y %H:%M')}")
+                print(f"   👤 Username: @{account.username or 'not set'}")
+                print(f"   📞 Phone: {account.phone or 'not set'}")
+                print(f"   🎨 Style: {account.style_default}")
+                print(f"   📊 Status: {status}")
+                print(f"   📅 Created: {account.created_at.strftime('%d.%m.%Y %H:%M')}")
                 
     async def _remove_account(self):
         """Удалить аккаунт"""
         print("\n" + "=" * 60)
-        print("🗑️ Удаление аккаунта")
+        print("🗑️ Delete Account")
         print("=" * 60)
-        
-        # Показываем список
+
+        # Show list
         await self._list_accounts()
-        
-        account_id = input("\nВведите ID аккаунта для удаления (0 для отмены): ").strip()
-        
+
+        account_id = input("\nEnter account ID to delete (0 to cancel): ").strip()
+
         try:
             account_id = int(account_id)
-            
+
             if account_id == 0:
-                print("❌ Отменено")
+                print("❌ Cancelled")
                 return
-                
+
             async with get_session() as session:
                 from shared.database.crud import get_account_by_id, delete_account
-                
+
                 account = await get_account_by_id(session, account_id)
-                
+
                 if not account:
-                    print(f"❌ Аккаунт с ID {account_id} не найден")
+                    print(f"❌ Account with ID {account_id} not found")
                     return
-                    
-                confirm = input(f"⚠️ Удалить аккаунт '{account.label}'? (yes/no): ").strip().lower()
-                
+
+                confirm = input(f"⚠️ Delete account '{account.label}'? (yes/no): ").strip().lower()
+
                 if confirm != 'yes':
-                    print("❌ Отменено")
+                    print("❌ Cancelled")
                     return
-                    
-                # Удаляем из БД
+
+                # Delete from DB
                 await delete_account(session, account_id)
                 await session.commit()
-                
-                # Удаляем файл сессии
+
+                # Delete session file
                 session_file = settings.sessions_dir / f"session_{account.tg_user_id}.session"
                 if session_file.exists():
                     session_file.unlink()
-                    
-                print(f"✅ Аккаунт '{account.label}' успешно удалён")
-                
+
+                print(f"✅ Account '{account.label}' successfully deleted")
+
         except ValueError:
-            print("❌ Неверный ID")
+            print("❌ Invalid ID")
         except Exception as e:
-            logger.exception(f"❌ Ошибка удаления аккаунта: {e}")
-            print(f"❌ Произошла ошибка: {e}")
+            logger.exception(f"❌ Account deletion error: {e}")
+            print(f"❌ An error occurred: {e}")
 
 
 ## Точка входа в CLI
@@ -406,10 +406,10 @@ async def main():
     try:
         await cli.start()
     except KeyboardInterrupt:
-        print("\n\n👋 Прервано пользователем")
+        print("\n\n👋 Interrupted by user")
     except Exception as e:
-        logger.exception(f"💥 Критическая ошибка: {e}")
-        print(f"\n💥 Произошла критическая ошибка: {e}")
+        logger.exception(f"💥 Critical error: {e}")
+        print(f"\n💥 Critical error occurred: {e}")
         sys.exit(1)
 
 

@@ -13,7 +13,7 @@ from aiogram import Bot
 
 from config import settings
 from shared.database.engine import get_session
-from shared.database.crud import get_lead_by_id
+from shared.database.crud import get_lead_by_id, get_operator_language
 from admin_bot.lead_card import format_lead_card, get_lead_push_keyboard
 
 
@@ -101,10 +101,13 @@ class AdminBotAPIServer:
                 ## AI-данные уже загружены через load_relations
                 ai_data = lead.ai_data
 
+                ## Получаем язык оператора
+                lang = await get_operator_language(session, settings.operator_user_id)
+
                 # Формируем карточку лида
-                text = format_lead_card(lead, ai_data)
+                text = format_lead_card(lead, ai_data, lang=lang)
                 has_draft = bool(lead.draft_reply or (ai_data and ai_data.generated_reply))
-                keyboard = get_lead_push_keyboard(lead.id, has_draft=has_draft)
+                keyboard = get_lead_push_keyboard(lead.id, has_draft=has_draft, lang=lang)
                 
                 # Отправляем оператору
                 try:

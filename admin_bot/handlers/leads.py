@@ -86,8 +86,8 @@ async def _show_leads_page(message_or_callback, page: int, edit: bool = True, la
     start_idx = page * LEADS_PER_PAGE
     page_leads = all_leads[start_idx:start_idx + LEADS_PER_PAGE]
 
-    text = format_leads_list(page_leads, page, total_pages)
-    keyboard = get_leads_list_keyboard(page_leads, page, total_pages)
+    text = format_leads_list(page_leads, page, total_pages, lang=lang)
+    keyboard = get_leads_list_keyboard(page_leads, page, total_pages, lang=lang)
 
     if edit:
         await message_or_callback.message.edit_text(text, reply_markup=keyboard)
@@ -360,7 +360,7 @@ async def callback_regenerate_draft(callback: CallbackQuery, state: FSMContext, 
         current_draft = lead.draft_reply or (lead.ai_data.generated_reply if lead.ai_data else None)
         if not current_draft:
             await callback.answer(t("leads.regen_waiting", lang))
-            await _do_regenerate(callback, session, lead, feedback=None)
+            await _do_regenerate(callback, session, lead, feedback=None, lang=lang)
             return
 
     ## Черновик есть -- спрашиваем фидбек
@@ -414,11 +414,11 @@ async def handle_regenerate_feedback(message: Message, state: FSMContext, lang: 
             await status_msg.edit_text(t("leads.regen_not_found", lang))
             return
 
-        await _do_regenerate_with_message(status_msg, session, lead, feedback=feedback)
+        await _do_regenerate_with_message(status_msg, session, lead, feedback=feedback, lang=lang)
 
 
 async def _do_regenerate(
-    callback: CallbackQuery, session, lead, feedback: Optional[str] = None
+    callback: CallbackQuery, session, lead, feedback: Optional[str] = None, lang: str = "ru"
 ):
     """Общая логика перегенерации черновика (из callback)."""
     lead_id = lead.id
@@ -461,13 +461,13 @@ async def _do_regenerate(
     except Exception as e:
         logger.error(f"Ошибка генерации черновика для лида #{lead_id}: {e}")
         await callback.answer(
-            t("leads.regen_error", "ru", error=str(e)[:80]),
+            t("leads.regen_error", lang, error=str(e)[:80]),
             show_alert=True
         )
 
 
 async def _do_regenerate_with_message(
-    status_msg: Message, session, lead, feedback: Optional[str] = None
+    status_msg: Message, session, lead, feedback: Optional[str] = None, lang: str = "ru"
 ):
     """Общая логика перегенерации черновика (из текстового сообщения)."""
     lead_id = lead.id
@@ -507,7 +507,7 @@ async def _do_regenerate_with_message(
 
     except Exception as e:
         logger.error(f"Ошибка генерации черновика для лида #{lead_id}: {e}")
-        await status_msg.edit_text(t("leads.regen_error", "ru", error=str(e)[:80]))
+        await status_msg.edit_text(t("leads.regen_error", lang, error=str(e)[:80]))
 
 
 ## Callback добавления автора в ЧС (v2)
@@ -998,8 +998,8 @@ async def callback_ignore_lead(callback: CallbackQuery, lang: str = "ru"):
         return
 
     total_pages = max(1, (len(leads) + LEADS_PER_PAGE - 1) // LEADS_PER_PAGE)
-    text = format_leads_list(leads[:LEADS_PER_PAGE], 0, total_pages)
-    keyboard = get_leads_list_keyboard(leads[:LEADS_PER_PAGE], 0, total_pages)
+    text = format_leads_list(leads[:LEADS_PER_PAGE], 0, total_pages, lang=lang)
+    keyboard = get_leads_list_keyboard(leads[:LEADS_PER_PAGE], 0, total_pages, lang=lang)
 
     await callback.message.edit_text(text, reply_markup=keyboard)
 

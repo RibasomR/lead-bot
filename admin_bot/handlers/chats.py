@@ -732,12 +732,11 @@ async def callback_show_join_errors(callback: CallbackQuery, state: FSMContext, 
         await callback.answer("❌", show_alert=True)
         return
 
-    # Формируем подробный отчёт (этот текст слишком специфичен для локалей -- оставляем inline)
-    text_lines = ["📋 <b>Подробный отчёт</b>\n"]
+    text_lines = [t("chats.join_report_title", lang)]
 
     private_channels = details.get('private', [])
     if private_channels:
-        text_lines.append(f"🔒 <b>Приватные каналы ({len(private_channels)}):</b>\n")
+        text_lines.append(t("chats.join_private_label", lang, count=len(private_channels)))
         for item in private_channels:
             chat_title = item.get('chat', '?')
             username = item.get('username', '')
@@ -750,7 +749,7 @@ async def callback_show_join_errors(callback: CallbackQuery, state: FSMContext, 
 
     pending_approval = details.get('pending_approval', [])
     if pending_approval:
-        text_lines.append(f"⏳ <b>Ожидают одобрения ({len(pending_approval)}):</b>\n")
+        text_lines.append(t("chats.join_pending_label", lang, count=len(pending_approval)))
         for item in pending_approval:
             chat_title = item.get('chat', '?')
             username = item.get('username', '')
@@ -764,7 +763,7 @@ async def callback_show_join_errors(callback: CallbackQuery, state: FSMContext, 
 
     errors = details.get('errors', [])
     if errors:
-        text_lines.append(f"\n❌ <b>Ошибки ({len(errors)}):</b>\n")
+        text_lines.append(t("chats.join_errors_label", lang, count=len(errors)))
         for item in errors[:10]:
             chat_title = item.get('chat', '?')
             username = item.get('username', '')
@@ -776,11 +775,11 @@ async def callback_show_join_errors(callback: CallbackQuery, state: FSMContext, 
                 text_lines.append(f"• <b>{chat_title}</b>")
             text_lines.append(f"  <i>{error_msg[:100]}</i>\n")
         if len(errors) > 10:
-            text_lines.append(f"<i>...+{len(errors) - 10}</i>")
+            text_lines.append(f"<i>{t('chats.join_more', lang, count=len(errors) - 10)}</i>")
 
     flood_wait = details.get('flood_wait', [])
     if flood_wait:
-        text_lines.append(f"\n⏳ <b>FloodWait ({len(flood_wait)}):</b>\n")
+        text_lines.append(t("chats.join_flood_label", lang, count=len(flood_wait)))
         for item in flood_wait[:5]:
             chat_title = item.get('chat', '?')
             username = item.get('username', '')

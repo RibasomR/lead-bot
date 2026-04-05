@@ -348,6 +348,9 @@ STRINGS = {
         "join_private_label": "\n🔒 <b>Private channels:</b> {count}\n",
         "join_pending_label": "⏳ <b>Requests submitted:</b> {count}\n",
         "join_errors_label": "❌ <b>Other errors:</b> {count}\n",
+        "join_report_title": "📋 <b>Detailed Report</b>\n",
+        "join_flood_label": "\n⏳ <b>FloodWait:</b> {count}\n",
+        "join_more": "...+{count} more",
         "join_details_btn": "📋 Error details",
         "join_api_error": "❌ <b>Auto-subscription error</b>\n\nStatus: {status}\nError: {error}",
         "join_timeout": (

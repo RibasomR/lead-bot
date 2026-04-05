@@ -13,7 +13,7 @@ from admin_bot.filters import OperatorFilter
 from admin_bot.keyboards import get_main_menu_keyboard, get_language_keyboard
 from config import settings
 from shared.database.engine import get_session
-from shared.database.crud import get_leads_statistics
+from shared.database.crud import get_leads_statistics, get_operator_settings
 from shared.locales import t
 
 logger = logging.getLogger(__name__)
@@ -27,12 +27,23 @@ router = Router(name="start_router")
 async def cmd_start(message: Message, lang: str = "ru"):
     """
     Обработчик команды /start.
-    Отправляет приветственное сообщение и главное меню.
+    Для нового пользователя показывает выбор языка.
+    Для существующего — главное меню.
     """
-    await message.answer(
-        t("start.welcome", lang),
-        reply_markup=get_main_menu_keyboard(lang)
-    )
+    async with get_session() as session:
+        existing = await get_operator_settings(session, message.from_user.id)
+
+    if existing is None:
+        ## Новый пользователь — показываем выбор языка
+        await message.answer(
+            "🌐 Please select your language / Выберите язык:",
+            reply_markup=get_language_keyboard()
+        )
+    else:
+        await message.answer(
+            t("start.welcome", lang),
+            reply_markup=get_main_menu_keyboard(lang)
+        )
 
 
 ## Команда /help
