@@ -1,0 +1,46 @@
+name: "🐛 Баг-репорт"
+description: "Что-то работает не так? Расскажи подробнее."
+labels: ["bug"]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Описание бага
+      description: Что произошло?
+      placeholder: "Бот не отправляет отклик после нажатия кнопки..."
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Шаги для воспроизведения
+      description: Как воспроизвести проблему?
+      placeholder: |
+        1. Отправить /start
+        2. Нажать кнопку "..."
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Ожидаемое поведение
+      description: Что должно было произойти?
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Логи / скриншоты
+      description: Если есть — вставь логи или скриншоты
+    validations:
+      required: false
+  - type: dropdown
+    id: deploy
+    attributes:
+      label: Способ запуска
+      options:
+        - Docker Compose
+        - Без Docker (вручную)
+    validations:
+      required: true
