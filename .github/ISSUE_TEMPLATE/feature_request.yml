@@ -1,26 +1,26 @@
-name: "✨ Предложение фичи"
-description: "Есть идея, как улучшить проект?"
+name: "✨ Feature Request"
+description: "Got an idea to improve the project?"
 labels: ["enhancement"]
 body:
   - type: textarea
     id: description
     attributes:
-      label: Описание
-      description: Что хочешь добавить или изменить?
-      placeholder: "Было бы круто, если бот мог бы..."
+      label: Description
+      description: What would you like to add or change?
+      placeholder: "It would be great if the bot could..."
     validations:
       required: true
   - type: textarea
     id: motivation
     attributes:
-      label: Зачем это нужно?
-      description: Какую проблему это решает?
+      label: Motivation
+      description: What problem does this solve?
     validations:
       required: false
   - type: textarea
     id: alternatives
     attributes:
-      label: Альтернативы
-      description: Рассматривал ли другие варианты решения?
+      label: Alternatives
+      description: Have you considered other solutions?
     validations:
       required: false

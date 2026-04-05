@@ -1,46 +1,46 @@
-name: "🐛 Баг-репорт"
-description: "Что-то работает не так? Расскажи подробнее."
+name: "🐛 Bug Report"
+description: "Something isn't working? Tell us more."
 labels: ["bug"]
 body:
   - type: textarea
     id: description
     attributes:
-      label: Описание бага
-      description: Что произошло?
-      placeholder: "Бот не отправляет отклик после нажатия кнопки..."
+      label: Bug description
+      description: What happened?
+      placeholder: "The bot doesn't send a reply after pressing the button..."
     validations:
       required: true
   - type: textarea
     id: steps
     attributes:
-      label: Шаги для воспроизведения
-      description: Как воспроизвести проблему?
+      label: Steps to reproduce
+      description: How can we reproduce the issue?
       placeholder: |
-        1. Отправить /start
-        2. Нажать кнопку "..."
+        1. Send /start
+        2. Press "..." button
         3. ...
     validations:
       required: true
   - type: textarea
     id: expected
     attributes:
-      label: Ожидаемое поведение
-      description: Что должно было произойти?
+      label: Expected behavior
+      description: What should have happened?
     validations:
       required: true
   - type: textarea
     id: logs
     attributes:
-      label: Логи / скриншоты
-      description: Если есть — вставь логи или скриншоты
+      label: Logs / screenshots
+      description: If available — paste logs or screenshots
     validations:
       required: false
   - type: dropdown
     id: deploy
     attributes:
-      label: Способ запуска
+      label: Deployment method
       options:
         - Docker Compose
-        - Без Docker (вручную)
+        - Without Docker (manual)
     validations:
       required: true
