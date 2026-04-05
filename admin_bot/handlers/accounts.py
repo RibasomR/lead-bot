@@ -212,18 +212,13 @@ async def cmd_list_accounts(message: Message, lang: str = "ru"):
     # Формируем текст списка
     text_lines = [t("accounts.list_title", lang, count=len(accounts))]
 
-    style_emoji = {
-        CommunicationStyle.POLITE.value: "🎩",
-        CommunicationStyle.FRIENDLY.value: "😊",
-        CommunicationStyle.AGGRESSIVE.value: "💪"
-    }
-
     for account in accounts[:ACCOUNTS_PER_PAGE]:
         status_icon = "🟢" if account.enabled else "🔴"
-        style_icon = style_emoji.get(account.style_default, "📝")
+        role = getattr(account, 'role', 'both')
+        role_icon = "📡" if role == "monitor" else "💬" if role == "reply" else "🔄"
 
         text_lines.append(
-            f"{status_icon} {style_icon} {hbold(account.label)}\n"
+            f"{status_icon} {role_icon} {hbold(account.label)}\n"
             f"   ID: #{account.id} | {account.phone or t('accounts.not_found', lang)}"
         )
         text_lines.append("")
@@ -281,18 +276,13 @@ async def callback_list_accounts(callback: CallbackQuery, lang: str = "ru"):
 
     text_lines = [t("accounts.list_title", lang, count=len(accounts))]
 
-    style_emoji = {
-        CommunicationStyle.POLITE.value: "🎩",
-        CommunicationStyle.FRIENDLY.value: "😊",
-        CommunicationStyle.AGGRESSIVE.value: "💪"
-    }
-
     for account in accounts[:ACCOUNTS_PER_PAGE]:
         status_icon = "🟢" if account.enabled else "🔴"
-        style_icon = style_emoji.get(account.style_default, "📝")
+        role = getattr(account, 'role', 'both')
+        role_icon = "📡" if role == "monitor" else "💬" if role == "reply" else "🔄"
 
         text_lines.append(
-            f"{status_icon} {style_icon} {hbold(account.label)}\n"
+            f"{status_icon} {role_icon} {hbold(account.label)}\n"
             f"   ID: #{account.id}"
         )
         text_lines.append("")
