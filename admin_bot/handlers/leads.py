@@ -150,11 +150,12 @@ async def _show_lead_card(callback: CallbackQuery, lead_id: int, lang: str = "ru
         ai_data = lead.ai_data
         draft = lead.draft_reply or (ai_data.generated_reply if ai_data else None)
 
-        text = format_lead_card(lead, ai_data)
+        text = format_lead_card(lead, ai_data, lang=lang)
         keyboard = get_lead_card_keyboard(
             lead_id,
             has_draft=bool(draft),
-            has_ai_data=ai_data is not None
+            has_ai_data=ai_data is not None,
+            lang=lang
         )
 
     await callback.message.edit_text(text, reply_markup=keyboard)
@@ -329,9 +330,9 @@ async def process_edited_draft(message: Message, state: FSMContext, lang: str = 
         lead = await get_lead_by_id(session, lead_id, load_relations=True)
         ai_data = lead.ai_data
 
-        card_text = format_lead_card(lead, ai_data)
+        card_text = format_lead_card(lead, ai_data, lang=lang)
         keyboard = get_lead_card_keyboard(
-            lead_id, has_draft=True, has_ai_data=ai_data is not None
+            lead_id, has_draft=True, has_ai_data=ai_data is not None, lang=lang
         )
 
     await state.clear()
@@ -451,9 +452,9 @@ async def _do_regenerate(
         lead = await get_lead_by_id(session, lead_id, load_relations=True)
         ai_data = lead.ai_data
 
-        text = format_lead_card(lead, ai_data)
+        text = format_lead_card(lead, ai_data, lang=lang)
         keyboard = get_lead_card_keyboard(
-            lead_id, has_draft=True, has_ai_data=ai_data is not None
+            lead_id, has_draft=True, has_ai_data=ai_data is not None, lang=lang
         )
 
         await callback.message.edit_text(text, reply_markup=keyboard)
@@ -498,9 +499,9 @@ async def _do_regenerate_with_message(
         lead = await get_lead_by_id(session, lead_id, load_relations=True)
         ai_data = lead.ai_data
 
-        text = format_lead_card(lead, ai_data)
+        text = format_lead_card(lead, ai_data, lang=lang)
         keyboard = get_lead_card_keyboard(
-            lead_id, has_draft=True, has_ai_data=ai_data is not None
+            lead_id, has_draft=True, has_ai_data=ai_data is not None, lang=lang
         )
 
         await status_msg.edit_text(text, reply_markup=keyboard)
@@ -598,9 +599,9 @@ async def callback_request_ai(callback: CallbackQuery, lang: str = "ru"):
             ai_data = lead.ai_data
             draft = lead.draft_reply or (ai_data.generated_reply if ai_data else None)
 
-            text = format_lead_card(lead, ai_data)
+            text = format_lead_card(lead, ai_data, lang=lang)
             keyboard = get_lead_card_keyboard(
-                lead_id, has_draft=bool(draft), has_ai_data=ai_data is not None
+                lead_id, has_draft=bool(draft), has_ai_data=ai_data is not None, lang=lang
             )
 
             await callback.message.edit_text(text, reply_markup=keyboard)
