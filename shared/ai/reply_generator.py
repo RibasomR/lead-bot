@@ -55,15 +55,17 @@ class ReplyGenerator:
     def __init__(self):
         self._model = settings.reply_model
         self._timeout = settings.ai_request_timeout
+        self._base_url = settings.reply_api_base
+        self._api_key = settings.reply_api_key or settings.openrouter_api_key
         self._client: Optional[httpx.AsyncClient] = None
 
     async def _get_client(self) -> httpx.AsyncClient:
         if self._client is None or self._client.is_closed:
             self._client = httpx.AsyncClient(
-                base_url="https://openrouter.ai/api/v1",
+                base_url=self._base_url,
                 timeout=httpx.Timeout(self._timeout),
                 headers={
-                    "Authorization": f"Bearer {settings.openrouter_api_key}",
+                    "Authorization": f"Bearer {self._api_key}",
                     "Content-Type": "application/json",
                     "HTTP-Referer": "https://github.com/RibasomR/lead-bot",
                     "X-Title": "LeadHunter ReplyGen"

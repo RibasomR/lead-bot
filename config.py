@@ -157,7 +157,17 @@ class Settings(BaseSettings):
     # === v2: Reply Generator ===
     reply_model: str = Field(
         default="deepseek/deepseek-chat-v3-0324",
-        description="Модель OpenRouter для генерации ответов на лиды"
+        description="Модель для генерации ответов на лиды"
+    )
+
+    reply_api_base: str = Field(
+        default="https://openrouter.ai/api/v1",
+        description="Base URL API для генерации ответов (OpenRouter или Antigravity proxy)"
+    )
+
+    reply_api_key: Optional[str] = Field(
+        default=None,
+        description="API ключ для reply API (если None — используется openrouter_api_key)"
     )
 
     # === v2: Одобренные чаты для мониторинга ===
