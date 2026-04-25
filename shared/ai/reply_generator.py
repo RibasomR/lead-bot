@@ -139,11 +139,11 @@ class ReplyGenerator:
                 "- echonote.ru: SaaS для AI-конспектов из YouTube-видео (Next.js + FastAPI + мульти-агентная LLM система)\n"
                 "- @PathtoAbundance_bot: игровой Telegram-бот с оплатой через ЮKassa, 22 игровых локации, PDF-отчёты\n"
                 "- Автоответы на отзывы Ozon/WB: n8n + Groq + RAG на pgvector, 4 магазина на автопилоте\n"
-                "- Веб-платформа для закрытого сообщества (700 чел): чаты, каналы, видеоархив, WebSocket, MinIO\n"
                 "- Парсер 2GIS: Telegram-бот для парсинга организаций с экспортом в Excel (Playwright stealth)\n"
                 "- Бот для образовательного центра GO IT: воронка записи на курсы, CRM, уведомления\n"
                 "- VPN-сервис с Telegram-ботом: VLESS Reality, панель Remnawave, IP-Lock\n"
-                "- Автопостинг на 49 аккаунтов Instagram/TikTok/YouTube Shorts с антибаном"
+                "- B2B outreach бот: автоматический аутрич в Telegram с LLM-контекстом и антибаном\n"
+                "- Лендинг для онлайн-школы: Next.js, каталог курсов, UTM-аналитика, SEO"
             )
 
         parts = []
