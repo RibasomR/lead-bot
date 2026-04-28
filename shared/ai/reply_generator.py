@@ -109,7 +109,7 @@ class ReplyGenerator:
 
         try:
             client = await self._get_client()
-            response = await client.post("/v1/messages", json={
+            response = await client.post("/messages", json={
                 "model": self._model,
                 "messages": [{"role": "user", "content": prompt}],
                 "temperature": 0.85,
