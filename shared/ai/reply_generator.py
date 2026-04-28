@@ -114,6 +114,7 @@ class ReplyGenerator:
                 "messages": [{"role": "user", "content": prompt}],
                 "temperature": 0.85,
                 "max_tokens": 1024,
+                "thinking": {"type": "disabled"},
             })
             response.raise_for_status()
 
