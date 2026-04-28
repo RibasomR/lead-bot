@@ -113,7 +113,7 @@ class ReplyGenerator:
                 "model": self._model,
                 "messages": [{"role": "user", "content": prompt}],
                 "temperature": 0.85,
-                "max_tokens": 1024,
+                "max_tokens": 4096,
                 "thinking": {"type": "disabled"},
             })
             response.raise_for_status()
