@@ -74,10 +74,9 @@ class ReplyGenerator:
                 base_url=self._base_url,
                 timeout=httpx.Timeout(self._timeout),
                 headers={
-                    "Authorization": f"Bearer {self._api_key}",
+                    "x-api-key": self._api_key,
+                    "anthropic-version": "2023-06-01",
                     "Content-Type": "application/json",
-                    "HTTP-Referer": "https://github.com/RibasomR/lead-bot",
-                    "X-Title": "LeadHunter ReplyGen"
                 }
             )
         return self._client
@@ -110,7 +109,7 @@ class ReplyGenerator:
 
         try:
             client = await self._get_client()
-            response = await client.post("/chat/completions", json={
+            response = await client.post("/v1/messages", json={
                 "model": self._model,
                 "messages": [{"role": "user", "content": prompt}],
                 "temperature": 0.85,
@@ -118,7 +117,16 @@ class ReplyGenerator:
             })
             response.raise_for_status()
 
-            content = response.json()["choices"][0]["message"]["content"].strip()
+            data = response.json()
+            content = ""
+            for block in data.get("content", []):
+                if block.get("type") == "text":
+                    content = block["text"].strip()
+                    break
+
+            if not content:
+                logger.warning(f"⚠️ Пустой ответ от {self._model}, content blocks: {data.get('content', [])}")
+                return self._fallback_template()
 
             if content.startswith('"') and content.endswith('"'):
                 content = content[1:-1]
