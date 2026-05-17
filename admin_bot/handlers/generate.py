@@ -7,7 +7,7 @@ import logging
 
 from aiogram import Router, F
 from aiogram.filters import Command
-from aiogram.types import Message, CallbackQuery
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.fsm.context import FSMContext
 
 from admin_bot.filters import OperatorFilter
@@ -20,6 +20,13 @@ from shared.database.crud import get_freelancer_profile
 logger = logging.getLogger(__name__)
 
 router = Router(name="generate_router")
+
+
+def _gen_result_kb() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🔄 Перегенерировать", callback_data="gen:regen")],
+        [InlineKeyboardButton(text="🔙 Готово", callback_data="gen:done")],
+    ])
 
 
 @router.message(Command("gen"), OperatorFilter())
@@ -61,16 +68,10 @@ async def process_generate_text(message: Message, state: FSMContext, lang: str =
         await state.update_data(lead_text=lead_text, last_draft=draft)
         await state.set_state(GenerateReplyStates.waiting_for_feedback)
 
-        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-        kb = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="🔄 Перегенерировать", callback_data="gen:regen")],
-            [InlineKeyboardButton(text="🔙 Готово", callback_data="gen:done")],
-        ])
-
         await status_msg.edit_text(
             f"📨 <b>Отклик:</b>\n\n{draft}\n\n"
             "💡 Напиши комментарий для перегенерации, нажми 🔄, или «Готово».",
-            reply_markup=kb,
+            reply_markup=_gen_result_kb(),
         )
 
     except Exception as e:
@@ -79,6 +80,7 @@ async def process_generate_text(message: Message, state: FSMContext, lang: str =
         await state.clear()
 
 
+## Кнопка "Перегенерировать" — спрашиваем комментарий
 @router.callback_query(F.data == "gen:regen", OperatorFilter())
 async def callback_gen_regen(callback: CallbackQuery, state: FSMContext, lang: str = "ru"):
     current_state = await state.get_state()
@@ -86,17 +88,32 @@ async def callback_gen_regen(callback: CallbackQuery, state: FSMContext, lang: s
         await callback.answer("❌ Нет активной генерации", show_alert=True)
         return
 
+    await state.set_state(GenerateReplyStates.waiting_for_regen_comment)
+    await callback.message.answer(
+        "💬 Напиши комментарий, что изменить в отклике.\n"
+        "Отправь <b>-</b> для перегенерации без комментария.\n"
+        "/cancel для отмены."
+    )
+    await callback.answer()
+
+
+## Получение комментария и перегенерация
+@router.message(GenerateReplyStates.waiting_for_regen_comment, OperatorFilter(), ~F.text.startswith("/"))
+async def process_regen_comment(message: Message, state: FSMContext, lang: str = "ru"):
     data = await state.get_data()
     lead_text = data.get("lead_text")
     previous_draft = data.get("last_draft")
 
     if not lead_text:
-        await callback.answer("❌ Текст заказа потерян", show_alert=True)
+        await message.answer("❌ Текст заказа потерян. Начни заново: /gen")
         await state.clear()
         return
 
-    await callback.answer("⏳ Перегенерация…")
-    await callback.message.edit_text("⏳ Перегенерация отклика…")
+    feedback = message.text.strip()
+    if feedback == "-":
+        feedback = None
+
+    status_msg = await message.answer("⏳ Перегенерация отклика…")
 
     async with get_session() as session:
         profile = await get_freelancer_profile(session)
@@ -107,31 +124,27 @@ async def callback_gen_regen(callback: CallbackQuery, state: FSMContext, lang: s
             lead_text=lead_text,
             style="деловой",
             freelancer_profile=profile,
+            feedback=feedback,
             previous_draft=previous_draft,
         )
 
         await state.update_data(last_draft=draft)
+        await state.set_state(GenerateReplyStates.waiting_for_feedback)
 
-        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-        kb = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="🔄 Перегенерировать", callback_data="gen:regen")],
-            [InlineKeyboardButton(text="🔙 Готово", callback_data="gen:done")],
-        ])
-
-        await callback.message.edit_text(
+        await status_msg.edit_text(
             f"📨 <b>Отклик:</b>\n\n{draft}\n\n"
             "💡 Напиши комментарий для перегенерации, нажми 🔄, или «Готово».",
-            reply_markup=kb,
+            reply_markup=_gen_result_kb(),
         )
 
     except Exception as e:
         logger.error(f"Ошибка перегенерации: {e}")
-        await callback.message.edit_text(f"❌ Ошибка: {str(e)[:100]}")
+        await status_msg.edit_text(f"❌ Ошибка: {str(e)[:100]}")
 
 
+## Текст напрямую в waiting_for_feedback — тоже перегенерация с комментарием
 @router.message(GenerateReplyStates.waiting_for_feedback, OperatorFilter(), ~F.text.startswith("/"))
 async def process_generate_feedback(message: Message, state: FSMContext, lang: str = "ru"):
-    feedback = message.text.strip()
     data = await state.get_data()
     lead_text = data.get("lead_text")
     previous_draft = data.get("last_draft")
@@ -140,6 +153,10 @@ async def process_generate_feedback(message: Message, state: FSMContext, lang: s
         await message.answer("❌ Текст заказа потерян. Начни заново: /gen")
         await state.clear()
         return
+
+    feedback = message.text.strip()
+    if feedback == "-":
+        feedback = None
 
     status_msg = await message.answer("⏳ Перегенерация с учётом комментария…")
 
@@ -158,16 +175,10 @@ async def process_generate_feedback(message: Message, state: FSMContext, lang: s
 
         await state.update_data(last_draft=draft)
 
-        from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-        kb = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text="🔄 Перегенерировать", callback_data="gen:regen")],
-            [InlineKeyboardButton(text="🔙 Готово", callback_data="gen:done")],
-        ])
-
         await status_msg.edit_text(
             f"📨 <b>Отклик:</b>\n\n{draft}\n\n"
             "💡 Напиши комментарий для перегенерации, нажми 🔄, или «Готово».",
-            reply_markup=kb,
+            reply_markup=_gen_result_kb(),
         )
 
     except Exception as e:

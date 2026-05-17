@@ -65,6 +65,7 @@ class GenerateReplyStates(StatesGroup):
     """Состояния генерации отклика на произвольный текст"""
     waiting_for_text = State()  # Ожидание текста заказа
     waiting_for_feedback = State()  # Ожидание комментария для перегенерации
+    waiting_for_regen_comment = State()  # Ожидание комментария после кнопки «Перегенерировать»
 
 
 ## Состояния настроек

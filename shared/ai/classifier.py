@@ -278,7 +278,7 @@ class LeadClassifier:
             "model": self._model,
             "messages": [{"role": "user", "content": prompt}],
             "temperature": 0.1,
-            "max_tokens": 256
+            "max_tokens": 512
         }
 
         logger.debug(f"📤 Классификация → {self._model}")
@@ -320,10 +320,16 @@ class LeadClassifier:
 
         ## Защита от неожиданной структуры JSON
         try:
-            content = data["choices"][0]["message"]["content"].strip()
+            content = data["choices"][0]["message"]["content"]
         except (KeyError, IndexError, TypeError) as e:
             logger.error(f"❌ Неожиданная структура ответа API: {e}\nData: {str(data)[:300]}")
             return self._default_result()
+
+        if content is None:
+            logger.warning(f"⚠️ API вернул content=null (rate limit или пустой ответ)")
+            return self._default_result()
+
+        content = content.strip()
 
         result = self._parse_response(content)
         result.model_used = self._model
@@ -357,9 +363,21 @@ class LeadClassifier:
 
         try:
             data = json.loads(text)
-        except json.JSONDecodeError as e:
-            logger.error(f"❌ JSON parse error: {e}\nТекст: {text[:300]}")
-            return self._default_result()
+        except json.JSONDecodeError:
+            ## Попытка дочинить обрезанный JSON (незакрытые tags/строки)
+            repaired = text.rstrip()
+            if repaired and not repaired.endswith("}"):
+                repaired = repaired.rstrip(",\n\r\t \"")
+                if '"tags"' in repaired and "]" not in repaired.split('"tags"')[1]:
+                    repaired += '"]}'
+                elif not repaired.endswith("}"):
+                    repaired += "}"
+            try:
+                data = json.loads(repaired)
+                logger.info("🔧 JSON восстановлен после обрезки")
+            except json.JSONDecodeError as e2:
+                logger.error(f"❌ JSON parse error: {e2}\nТекст: {text[:300]}")
+                return self._default_result()
 
         ## Валидация и нормализация relevance (может быть null при is_order=false)
         relevance_raw = data.get("relevance")
