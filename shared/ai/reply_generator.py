@@ -152,12 +152,15 @@ class ReplyGenerator:
         if not profile:
             return (
                 "Стек: Python, aiogram, Telethon, Next.js, FastAPI, PostgreSQL, Docker, n8n\n"
-                "Специализация: Telegram боты, веб-приложения, автоматизация, AI-интеграции\n\n"
+                "Специализация: Telegram боты, веб-приложения, автоматизация, AI-интеграции\n"
+                "GitHub: github.com/RibasomR\n\n"
                 "Портфолио:\n"
                 "- echonote.ru: SaaS для AI-конспектов из YouTube-видео (Next.js + FastAPI + мульти-агентная LLM система)\n"
+                "- LeadHunter (github.com/RibasomR/lead-bot): система мониторинга лидов из 30+ Telegram-чатов. AI-классификация через DeepSeek, автогенерация откликов, Telethon userbot + aiogram admin-панель, Docker deploy\n"
+                "- Finance Bot (github.com/RibasomR/finance-bot): трекер личных финансов в Telegram с голосовым вводом. Whisper для транскрипции, LLM парсит транзакции (сумма, категория, валюта), статистика, Excel-экспорт. aiogram 3 + SQLAlchemy + Redis\n"
+                "- 2GIS Parser (github.com/RibasomR/2gis-parser): Telegram-бот для парсинга организаций из 2ГИС. Антидетект-браузер Patchright, мульти-город, экспорт в Excel. Автоскролл, клик по карточкам, обход защиты\n"
                 "- @PathtoAbundance_bot: игровой Telegram-бот с оплатой через ЮKassa, 22 игровых локации, PDF-отчёты\n"
                 "- Автоответы на отзывы Ozon/WB: n8n + Groq + RAG на pgvector, 4 магазина на автопилоте\n"
-                "- Парсер 2GIS: Telegram-бот для парсинга организаций с экспортом в Excel (Playwright stealth)\n"
                 "- Бот для образовательного центра GO IT: воронка записи на курсы, CRM, уведомления\n"
                 "- VPN-сервис с Telegram-ботом: VLESS Reality, панель Remnawave, IP-Lock\n"
                 "- B2B outreach бот: автоматический аутрич в Telegram с LLM-контекстом и антибаном\n"
