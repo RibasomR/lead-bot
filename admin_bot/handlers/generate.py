@@ -70,7 +70,7 @@ async def process_generate_text(message: Message, state: FSMContext, lang: str =
 
         await status_msg.edit_text(
             f"📨 <b>Отклик:</b>\n\n{draft}\n\n"
-            "💡 Напиши комментарий для перегенерации, нажми 🔄, или «Готово».",
+            "💡 Нажми 🔄 для перегенерации или «Готово».",
             reply_markup=_gen_result_kb(),
         )
 
@@ -133,51 +133,7 @@ async def process_regen_comment(message: Message, state: FSMContext, lang: str =
 
         await status_msg.edit_text(
             f"📨 <b>Отклик:</b>\n\n{draft}\n\n"
-            "💡 Напиши комментарий для перегенерации, нажми 🔄, или «Готово».",
-            reply_markup=_gen_result_kb(),
-        )
-
-    except Exception as e:
-        logger.error(f"Ошибка перегенерации: {e}")
-        await status_msg.edit_text(f"❌ Ошибка: {str(e)[:100]}")
-
-
-## Текст напрямую в waiting_for_feedback — тоже перегенерация с комментарием
-@router.message(GenerateReplyStates.waiting_for_feedback, OperatorFilter(), ~F.text.startswith("/"))
-async def process_generate_feedback(message: Message, state: FSMContext, lang: str = "ru"):
-    data = await state.get_data()
-    lead_text = data.get("lead_text")
-    previous_draft = data.get("last_draft")
-
-    if not lead_text:
-        await message.answer("❌ Текст заказа потерян. Начни заново: /gen")
-        await state.clear()
-        return
-
-    feedback = message.text.strip()
-    if feedback == "-":
-        feedback = None
-
-    status_msg = await message.answer("⏳ Перегенерация с учётом комментария…")
-
-    async with get_session() as session:
-        profile = await get_freelancer_profile(session)
-
-    try:
-        reply_gen = get_reply_generator()
-        draft = await reply_gen.generate_reply(
-            lead_text=lead_text,
-            style="деловой",
-            freelancer_profile=profile,
-            feedback=feedback,
-            previous_draft=previous_draft,
-        )
-
-        await state.update_data(last_draft=draft)
-
-        await status_msg.edit_text(
-            f"📨 <b>Отклик:</b>\n\n{draft}\n\n"
-            "💡 Напиши комментарий для перегенерации, нажми 🔄, или «Готово».",
+            "💡 Нажми 🔄 для перегенерации или «Готово».",
             reply_markup=_gen_result_kb(),
         )
 
