@@ -93,6 +93,15 @@ async def show_profile(callback: CallbackQuery, lang: str = "ru"):
     await callback.answer()
 
 
+async def show_profile_from_message(message, lang: str = "ru"):
+    """Показ профиля из текстовой кнопки ReplyKeyboard."""
+    async with get_session() as session:
+        profile = await get_freelancer_profile(session)
+
+    text = format_profile_text(profile, lang)
+    await message.answer(text, reply_markup=get_profile_keyboard(lang))
+
+
 ## Маппинг полей → стейтов и ключей подсказок
 FIELD_MAP = {
     "stack": {

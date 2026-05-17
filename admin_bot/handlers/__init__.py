@@ -5,7 +5,7 @@
 
 from aiogram import Router
 
-from . import start, chats, accounts, leads, channel_discovery, profile, search
+from . import start, chats, accounts, leads, channel_discovery, profile, search, generate
 
 
 ## Создание главного роутера для всех хендлеров
@@ -27,6 +27,7 @@ def setup_handlers() -> Router:
     router.include_router(leads.router)     # FSM состояния для лидов
     router.include_router(profile.router)   # Профиль фрилансера (v2)
     router.include_router(search.router)    # Глобальный поиск (v2)
+    router.include_router(generate.router)  # Генерация отклика на произвольный текст
     router.include_router(start.router)     # Общие команды и fallback обработчики
     
     return router

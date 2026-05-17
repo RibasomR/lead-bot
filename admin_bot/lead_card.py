@@ -114,10 +114,6 @@ def format_lead_card(
         lines.append("")
         lines.append(f"🔗 {hlink('Открыть в чате', lead.message_url)}")
 
-    ## Стек
-    if lead.stack_tags:
-        lines.append(f"🔧 {hcode(lead.stack_tags)}")
-
     ## Черновик ответа
     draft = lead.draft_reply or (ai_data.generated_reply if ai_data else None)
     draft_display = None

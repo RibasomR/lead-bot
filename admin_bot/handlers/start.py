@@ -8,9 +8,10 @@ import logging
 from aiogram import Router, F
 from aiogram.filters import Command, CommandStart
 from aiogram.types import Message, CallbackQuery
+from aiogram.fsm.context import FSMContext
 
 from admin_bot.filters import OperatorFilter
-from admin_bot.keyboards import get_main_menu_keyboard, get_language_keyboard
+from admin_bot.keyboards import get_main_menu_keyboard, get_language_keyboard, get_persistent_keyboard
 from config import settings
 from shared.database.engine import get_session
 from shared.database.crud import get_leads_statistics, get_operator_settings
@@ -44,6 +45,7 @@ async def cmd_start(message: Message, lang: str = "ru"):
             t("start.welcome", lang),
             reply_markup=get_main_menu_keyboard(lang)
         )
+        await message.answer("⌨️", reply_markup=get_persistent_keyboard())
 
 
 ## Команда /help
@@ -208,6 +210,19 @@ async def callback_search_menu(callback: CallbackQuery, lang: str = "ru"):
     """
     from admin_bot.handlers.search import callback_search_main
     await callback_search_main(callback, lang)
+
+
+## Обработка текстовых кнопок ReplyKeyboard
+@router.message(F.text == "🧑‍💻 Профиль", OperatorFilter())
+async def btn_profile(message: Message, lang: str = "ru"):
+    from admin_bot.handlers.profile import show_profile_from_message
+    await show_profile_from_message(message, lang)
+
+
+@router.message(F.text == "✍️ Сгенерировать отклик", OperatorFilter())
+async def btn_generate(message: Message, state: FSMContext, lang: str = "ru"):
+    from admin_bot.handlers.generate import cmd_generate
+    await cmd_generate(message, state, lang)
 
 
 ## Обработка неизвестных команд от оператора

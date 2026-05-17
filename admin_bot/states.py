@@ -60,6 +60,13 @@ class ProfileStates(StatesGroup):
     editing_portfolio = State()   # Редактирование ссылки на портфолио
 
 
+## Состояния генерации отклика на произвольный текст
+class GenerateReplyStates(StatesGroup):
+    """Состояния генерации отклика на произвольный текст"""
+    waiting_for_text = State()  # Ожидание текста заказа
+    waiting_for_feedback = State()  # Ожидание комментария для перегенерации
+
+
 ## Состояния настроек
 class SettingsStates(StatesGroup):
     """Состояния изменения настроек"""

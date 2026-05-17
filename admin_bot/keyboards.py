@@ -6,11 +6,22 @@
 
 from typing import List, Optional
 
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton, ReplyKeyboardMarkup, KeyboardButton
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from shared.database.models import Account, Chat, CommunicationStyle
 from shared.locales import t
+
+
+## Постоянная клавиатура внизу экрана
+def get_persistent_keyboard() -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="🧑‍💻 Профиль"), KeyboardButton(text="✍️ Сгенерировать отклик")]
+        ],
+        resize_keyboard=True,
+        is_persistent=True,
+    )
 
 
 ## Клавиатура выбора языка
