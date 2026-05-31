@@ -130,7 +130,8 @@ class AuthCLI:
         print(f"\n🔄 Authorizing account '{account.label}' ({phone})...")
 
         ## Создаём Telethon клиент
-        session_file = settings.sessions_dir / f"temp_auth_{phone.replace('+', '')}.session"
+        phone_clean = phone.replace('+', '')
+        session_file = settings.sessions_dir / f"temp_auth_{phone_clean}.session"
 
         try:
             self.client = TelegramClient(
@@ -226,7 +227,8 @@ class AuthCLI:
         style = style_map.get(style_choice, CommunicationStyle.FRIENDLY.value)
         
         # Создание Telethon клиента
-        session_file = settings.sessions_dir / f"temp_auth_{phone.replace('+', '')}.session"
+        phone_clean = phone.replace('+', '')
+        session_file = settings.sessions_dir / f"temp_auth_{phone_clean}.session"
         
         try:
             self.client = TelegramClient(
