@@ -145,6 +145,7 @@ class AuthCLI:
                 system_lang_code="ru",
             )
 
+            await self.client.connect()
             # Используем автоматический процесс авторизации как в рабочем скрипте
             await self.client.start(phone=phone)
 
@@ -242,6 +243,7 @@ class AuthCLI:
                 system_lang_code="ru",
             )
 
+            await self.client.connect()
             # Используем автоматический процесс авторизации как в рабочем скрипте
             await self.client.start(phone=phone)
 
