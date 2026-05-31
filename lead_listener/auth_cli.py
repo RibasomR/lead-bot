@@ -136,27 +136,23 @@ class AuthCLI:
             self.client = TelegramClient(
                 str(session_file),
                 settings.telegram_api_id,
-                settings.telegram_api_hash
+                settings.telegram_api_hash,
+                device_model="PC",
+                system_version="Windows 10",
+                app_version="1.0.0",
+                lang_code="ru",
+                system_lang_code="ru",
             )
 
-            await self.client.connect()
+            # Используем автоматический процесс авторизации как в рабочем скрипте
+            await self.client.start(phone=phone)
 
             if await self.client.is_user_authorized():
-                print("✅ Already authorized!")
+                print("✅ Authorization successful!")
                 me = await self.client.get_me()
             else:
-                print("📨 Sending authorization code...")
-                await self.client.send_code_request(phone)
-
-                code = input("📨 Enter code from Telegram: ").strip()
-
-                try:
-                    await self.client.sign_in(phone, code)
-                    me = await self.client.get_me()
-                except SessionPasswordNeededError:
-                    password = input("🔒 Enter 2FA password: ").strip()
-                    await self.client.sign_in(password=password)
-                    me = await self.client.get_me()
+                print("❌ Authorization failed")
+                return
 
             print(f"\n✅ Authorization successful!")
             print(f"   👤 Name: {me.first_name} {me.last_name or ''}")
@@ -236,34 +232,24 @@ class AuthCLI:
             self.client = TelegramClient(
                 str(session_file),
                 settings.telegram_api_id,
-                settings.telegram_api_hash
+                settings.telegram_api_hash,
+                device_model="PC",
+                system_version="Windows 10",
+                app_version="1.0.0",
+                lang_code="ru",
+                system_lang_code="ru",
             )
-            
-            await self.client.connect()
-            
+
+            # Используем автоматический процесс авторизации как в рабочем скрипте
+            await self.client.start(phone=phone)
+
             if await self.client.is_user_authorized():
-                print("✅ Account already authorized")
+                print("✅ Authorization successful!")
                 me = await self.client.get_me()
             else:
-                # Request authorization code
-                print("\n🔄 Sending authorization code...")
-                await self.client.send_code_request(phone)
+                print("❌ Authorization failed")
+                return
 
-                code = input("📨 Enter code from Telegram: ").strip()
-
-                try:
-                    # Try signing in with code
-                    await self.client.sign_in(phone, code)
-                    me = await self.client.get_me()
-
-                except SessionPasswordNeededError:
-                    # 2FA password required
-                    password = input("🔒 Enter 2FA password: ").strip()
-                    await self.client.sign_in(password=password)
-                    me = await self.client.get_me()
-
-            # Authorization successful
-            print(f"\n✅ Authorization successful!")
             print(f"   👤 Name: {me.first_name} {me.last_name or ''}")
             print(f"   🆔 ID: {me.id}")
             print(f"   📝 Username: @{me.username or 'not set'}")
